@@ -22,17 +22,17 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
-    - name: Restore
-      run: dotnet restore TonSdk.NET.sln
+    - name: Build and Pack Core
+      run: |
+        dotnet restore TonSdk.Core/src/TonSdk.Core.csproj
+        dotnet build TonSdk.Core/src/TonSdk.Core.csproj --no-restore --configuration Release
+        dotnet pack TonSdk.Core/src/TonSdk.Core.csproj --no-build --configuration Release --output ./artifacts
     
-    - name: Build
-      run: dotnet build TonSdk.NET.sln --no-restore --configuration Release
-    
-    - name: Pack Core
-      run: dotnet pack TonSdk.Core/src/TonSdk.Core.csproj --no-build --configuration Release --output ./artifacts
-    
-    - name: Pack Adnl
-      run: dotnet pack TonSdk.Adnl/src/TonSdk.Adnl.csproj --no-build --configuration Release --output ./artifacts
+    - name: Build and Pack Adnl
+      run: |
+        dotnet restore TonSdk.Adnl/src/TonSdk.Adnl.csproj
+        dotnet build TonSdk.Adnl/src/TonSdk.Adnl.csproj --no-restore --configuration Release
+        dotnet pack TonSdk.Adnl/src/TonSdk.Adnl.csproj --no-build --configuration Release --output ./artifacts
     
     - name: Publish to NuGet
       run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
