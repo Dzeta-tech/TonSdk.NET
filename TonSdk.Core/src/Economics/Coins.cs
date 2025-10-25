@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-namespace TonSdk.Core;
+namespace TonSdk.Core.Economics;
 
 public class CoinsOptions(bool isNano = false, int decimals = 9)
 {

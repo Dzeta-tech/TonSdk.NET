@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TonSdk.Core.boc.bits;
+using TonSdk.Core.boc.Cells;
 
-namespace TonSdk.Core.Boc;
+namespace TonSdk.Core.boc;
 
 public struct HashmapSerializers<TK, TV>
 {

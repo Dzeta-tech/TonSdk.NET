@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Security.Cryptography;
 
-namespace TonSdk.Core.Boc;
+namespace TonSdk.Core.boc.bits;
 
 public class Bits : IComparable<Bits>
 {

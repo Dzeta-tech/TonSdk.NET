@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using JustCRC32C;
+using TonSdk.Core.boc.bits;
+using TonSdk.Core.boc.Cells;
 
-namespace TonSdk.Core.Boc;
+namespace TonSdk.Core.boc;
 
 public class BagOfCells
 {

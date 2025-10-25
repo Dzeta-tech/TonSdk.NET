@@ -1,4 +1,4 @@
-﻿namespace TonSdk.Core.Crypto;
+﻿namespace TonSdk.Core.Cryptography;
 
 public static class MnemonicWords
 {

@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using TonSdk.Core.Block;
-using TonSdk.Core.Boc;
-using TonSdk.Core.Crypto;
+using TonSdk.Core.Blocks;
+using TonSdk.Core.boc.bits;
+using TonSdk.Core.boc.Cells;
+using TonSdk.Core.Cryptography;
 
-namespace TonSdk.Core;
+namespace TonSdk.Core.Addresses;
 
 /// <summary>
 ///     Represents a TON blockchain address.

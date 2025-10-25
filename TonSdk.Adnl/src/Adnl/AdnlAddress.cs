@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using Utils = TonSdk.Core.Crypto.Utils;
+using Utils = TonSdk.Core.Cryptography.Utils;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 internal class AdnlAddress
 {

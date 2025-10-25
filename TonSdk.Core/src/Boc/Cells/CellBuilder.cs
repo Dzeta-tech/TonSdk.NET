@@ -1,6 +1,7 @@
 ﻿using System;
+using TonSdk.Core.boc.bits;
 
-namespace TonSdk.Core.Boc;
+namespace TonSdk.Core.boc.Cells;
 
 public class CellBuilder(int length = 1023) : BitsBuilderImpl<CellBuilder, Cell>(length)
 {

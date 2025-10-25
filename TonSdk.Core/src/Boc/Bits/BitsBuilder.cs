@@ -3,8 +3,10 @@ using System.Collections;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using TonSdk.Core.Addresses;
+using TonSdk.Core.Economics;
 
-namespace TonSdk.Core.Boc;
+namespace TonSdk.Core.boc.bits;
 
 public abstract class BitsBuilderImpl<T, TU>(BitArray bits, int cnt)
     where T : BitsBuilderImpl<T, TU>

@@ -3,7 +3,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 public enum AdnlClientState
 {

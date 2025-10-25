@@ -1,4 +1,4 @@
-﻿namespace TonSdk.Core.Boc;
+﻿namespace TonSdk.Core.boc.Cells;
 
 public enum CellType
 {

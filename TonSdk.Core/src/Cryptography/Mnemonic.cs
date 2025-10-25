@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace TonSdk.Core.Crypto;
+namespace TonSdk.Core.Cryptography;
 
 /// <summary>
 ///     Mnemonic phrase for TON wallet generation.
@@ -76,9 +76,9 @@ public class Mnemonic
         return words.All(word => MnemonicWords.Bip0039En.Contains(word));
     }
 
-    static byte[] GenerateSalt(string salt)
+    static string GenerateSalt(string salt)
     {
-        return System.Text.Encoding.UTF8.GetBytes(salt);
+        return Utils.Normalize(salt);
     }
 }
 

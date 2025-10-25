@@ -8,7 +8,7 @@ using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace TonSdk.Core.Crypto;
+namespace TonSdk.Core.Cryptography;
 
 public static class Utils
 {

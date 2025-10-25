@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using TonSdk.Core.Crypto;
+using TonSdk.Core.Cryptography;
 
 namespace TonSdk.Adnl.LiteClient.Engines;
 

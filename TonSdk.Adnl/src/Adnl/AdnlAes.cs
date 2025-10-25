@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 public class AesCounter
 {

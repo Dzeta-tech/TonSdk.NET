@@ -1,5 +1,6 @@
 using NUnit.Framework;
-using TonSdk.Core.Crypto;
+using TonSdk.Adnl.Adnl;
+using TonSdk.Core.Cryptography;
 
 namespace TonSdk.Adnl.Tests;
 

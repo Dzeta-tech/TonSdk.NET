@@ -5,7 +5,8 @@ using Microsoft.Extensions.Logging;
 using TonSdk.Adnl.LiteClient.Engines;
 using TonSdk.Adnl.LiteClient.Protocol;
 using TonSdk.Core;
-using TonSdk.Core.Crypto;
+using TonSdk.Core.Addresses;
+using TonSdk.Core.Cryptography;
 
 namespace TonSdk.Adnl.LiteClient;
 

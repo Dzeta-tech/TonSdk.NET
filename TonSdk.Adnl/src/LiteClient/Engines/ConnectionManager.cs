@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using TonSdk.Adnl.Adnl;
 
 namespace TonSdk.Adnl.LiteClient.Engines;
 

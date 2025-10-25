@@ -6,7 +6,7 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 internal class Ed25519
 {

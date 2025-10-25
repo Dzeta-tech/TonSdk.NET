@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
-using TonSdk.Core.Boc;
+using TonSdk.Core.boc.bits;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 internal class AdnlPacket
 {

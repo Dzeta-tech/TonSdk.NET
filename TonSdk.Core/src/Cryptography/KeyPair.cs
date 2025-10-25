@@ -1,9 +1,9 @@
 ﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
-using TonSdk.Core.Boc;
+using TonSdk.Core.boc.Cells;
 
-namespace TonSdk.Core.Crypto;
+namespace TonSdk.Core.Cryptography;
 
 public class KeyPair(byte[] privateKey, byte[] publicKey)
 {

@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TonSdk.Core;
-using TonSdk.Core.Crypto;
+using TonSdk.Core.Cryptography;
 
 namespace TonSdk.Adnl.LiteClient.Engines;
 

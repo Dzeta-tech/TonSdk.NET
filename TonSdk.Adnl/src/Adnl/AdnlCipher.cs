@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 internal class Cipher
 {

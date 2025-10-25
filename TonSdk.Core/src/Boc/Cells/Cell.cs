@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using TonSdk.Core.boc.bits;
 
-namespace TonSdk.Core.Boc;
+namespace TonSdk.Core.boc.Cells;
 
 public class Cell
 {

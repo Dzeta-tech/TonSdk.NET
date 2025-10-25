@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Security.Cryptography;
 
-namespace TonSdk.Adnl;
+namespace TonSdk.Adnl.Adnl;
 
 internal class AdnlAesParams
 {
