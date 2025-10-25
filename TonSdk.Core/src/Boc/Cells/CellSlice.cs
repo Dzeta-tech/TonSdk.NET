@@ -1,7 +1,7 @@
 ﻿using System;
-using TonSdk.Core.boc.bits;
+using TonSdk.Core.Boc.bits;
 
-namespace TonSdk.Core.boc.Cells;
+namespace TonSdk.Core.Boc.Cells;
 
 public class CellSlice : BitsSliceImpl<CellSlice, Cell>
 {

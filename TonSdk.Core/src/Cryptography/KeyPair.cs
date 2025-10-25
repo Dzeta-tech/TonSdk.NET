@@ -1,7 +1,7 @@
 ﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
-using TonSdk.Core.boc.Cells;
+using TonSdk.Core.Boc.Cells;
 
 namespace TonSdk.Core.Cryptography;
 

@@ -1,10 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using TonSdk.Adnl.LiteClient.Engines;
 using TonSdk.Adnl.LiteClient.Protocol;
-using TonSdk.Core;
+using TonSdk.Adnl.LiteClient.Types;
 using TonSdk.Core.Addresses;
 using TonSdk.Core.Cryptography;
 
@@ -189,7 +188,7 @@ public class LiteClient : IDisposable
     ///     List transactions in a block with parsed addresses and metadata.
     ///     Returns user-friendly BlockTransactionsList with typed Address objects.
     /// </summary>
-    public async Task<Types.BlockTransactionsList> ListBlockTransactions(
+    public async Task<BlockTransactionsList> ListBlockTransactions(
         TonNodeBlockIdExt id,
         uint count = 1024,
         LiteServerTransactionId3 after = null,
@@ -207,14 +206,14 @@ public class LiteClient : IDisposable
             cancellationToken: cancellationToken);
 
         LiteServerBlockTransactions raw = Decoder.DecodeBlockTransactions(response);
-        return Types.BlockTransactionsList.FromRaw(raw);
+        return BlockTransactionsList.FromRaw(raw);
     }
 
     /// <summary>
     ///     Get account state with parsed balance, code, and data.
     ///     Returns user-friendly ClientAccountState with typed Coins and Cell objects.
     /// </summary>
-    public async Task<Types.ClientAccountState> GetAccountState(
+    public async Task<ClientAccountState> GetAccountState(
         TonNodeBlockIdExt id,
         Address address,
         CancellationToken cancellationToken = default)
@@ -230,7 +229,7 @@ public class LiteClient : IDisposable
             cancellationToken: cancellationToken);
 
         LiteServerAccountState raw = Decoder.DecodeAccountState(response);
-        return Types.ClientAccountState.FromRaw(raw, address);
+        return ClientAccountState.FromRaw(raw, address);
     }
 
     /// <summary>

@@ -39,7 +39,7 @@ public class Mnemonic
     /// </summary>
     public static Mnemonic FromWords(string[] words, MnemonicType type = MnemonicType.Ton, string? password = null)
     {
-        if (words == null || words.Length != 24)
+        if (words is not { Length: 24 })
             throw new ArgumentException("Mnemonic must contain exactly 24 words", nameof(words));
 
         if (!words.All(word => MnemonicWords.Bip0039En.Contains(word)))
@@ -70,7 +70,7 @@ public class Mnemonic
     /// </summary>
     public static bool IsValid(string[] words)
     {
-        if (words == null || words.Length != 24)
+        if (words is not { Length: 24 })
             return false;
 
         return words.All(word => MnemonicWords.Bip0039En.Contains(word));
@@ -87,4 +87,3 @@ public enum MnemonicType
     Ton,
     Bip39
 }
-

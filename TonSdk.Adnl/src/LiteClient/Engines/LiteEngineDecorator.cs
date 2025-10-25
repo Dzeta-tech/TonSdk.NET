@@ -15,11 +15,11 @@ public abstract class LiteEngineDecorator : ILiteEngine
     protected LiteEngineDecorator(ILiteEngine innerEngine)
     {
         this.innerEngine = innerEngine;
-        
+
         innerEngine.Connected += () => Connected?.Invoke();
         innerEngine.Ready += () => Ready?.Invoke();
         innerEngine.Closed += () => Closed?.Invoke();
-        innerEngine.Error += (e) => Error?.Invoke(e);
+        innerEngine.Error += e => Error?.Invoke(e);
     }
 
     public virtual bool IsReady => innerEngine.IsReady;
@@ -43,4 +43,3 @@ public abstract class LiteEngineDecorator : ILiteEngine
         innerEngine.Dispose();
     }
 }
-

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using JustCRC32C;
-using TonSdk.Core.boc.bits;
-using TonSdk.Core.boc.Cells;
+using TonSdk.Core.Boc.bits;
+using TonSdk.Core.Boc.Cells;
 
-namespace TonSdk.Core.boc;
+namespace TonSdk.Core.Boc;
 
-public class BagOfCells
+public static class BagOfCells
 {
     const uint BocConstructor = 0xb5ee9c72;
 

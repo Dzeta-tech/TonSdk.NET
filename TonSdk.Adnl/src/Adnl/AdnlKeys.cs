@@ -46,7 +46,7 @@ internal class Ed25519
 
     static byte[] EdwardsToMontgomeryPublicKey(byte[] publicKey)
     {
-        if (publicKey == null || publicKey.Length != 32) throw new ArgumentException("Invalid public key.");
+        if (publicKey is not { Length: 32 }) throw new ArgumentException("Invalid public key.");
 
         byte[] yBytes = new byte[publicKey.Length];
         Array.Copy(publicKey, yBytes, publicKey.Length);

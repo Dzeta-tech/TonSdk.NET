@@ -5,7 +5,7 @@ using System.Text;
 using TonSdk.Core.Addresses;
 using TonSdk.Core.Economics;
 
-namespace TonSdk.Core.boc.bits;
+namespace TonSdk.Core.Boc.bits;
 
 public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
 {
@@ -34,7 +34,7 @@ public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
 
     public int RemainderBits => BitsEn - BitsSt;
 
-    public Bits Bits => new(BitArrayUtils.Slice(__Bits.Data, BitsSt, BitsEn));
+    public Bits Bits => new(__Bits.Data.Slice(BitsSt, BitsEn));
 
     protected void CheckBitsUnderflow(int bitEnd)
     {
@@ -65,7 +65,7 @@ public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
         CheckSize(size);
         int bitEnd = BitsSt + size;
         CheckBitsUnderflow(bitEnd);
-        return new Bits(BitArrayUtils.Slice(__Bits.Data, BitsSt, bitEnd));
+        return new Bits(__Bits.Data.Slice(BitsSt, bitEnd));
     }
 
     public Bits LoadBits(int size)
@@ -73,7 +73,7 @@ public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
         CheckSize(size);
         int bitEnd = BitsSt + size;
         CheckBitsUnderflow(bitEnd);
-        BitArray bits = BitArrayUtils.Slice(__Bits.Data, BitsSt, bitEnd);
+        BitArray bits = __Bits.Data.Slice(BitsSt, bitEnd);
         BitsSt = bitEnd;
         return new Bits(bits);
     }
@@ -334,7 +334,6 @@ public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
         return result;
     }
 }
-
 
 public class BitsSlice : BitsSliceImpl<BitsSlice, Bits>
 {

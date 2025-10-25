@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using TonSdk.Core.Blocks;
-using TonSdk.Core.boc.bits;
-using TonSdk.Core.boc.Cells;
+using TonSdk.Core.Boc.bits;
+using TonSdk.Core.Boc.Cells;
 using TonSdk.Core.Cryptography;
 
 namespace TonSdk.Core.Addresses;
@@ -12,7 +12,7 @@ namespace TonSdk.Core.Addresses;
 ///     Represents a TON blockchain address.
 ///     Immutable value type consisting of a workchain ID and 32-byte hash.
 /// </summary>
-public readonly struct Address : IEquatable<Address>
+public readonly struct Address(int workchain, byte[] hash) : IEquatable<Address>
 {
     const byte FlagBounceable = 0x11;
     const byte FlagNonBounceable = 0x51;
@@ -20,14 +20,8 @@ public readonly struct Address : IEquatable<Address>
     const byte FlagTestNonBounceable = 0xd1;
     const int HashSize = 32;
 
-    public readonly int Workchain;
-    public readonly byte[] Hash;
-
-    public Address(int workchain, byte[] hash)
-    {
-        Workchain = workchain;
-        Hash = hash;
-    }
+    public readonly int Workchain = workchain;
+    public readonly byte[] Hash = hash;
 
     /// <summary>
     ///     Creates an address from workchain and hash.
@@ -37,7 +31,7 @@ public readonly struct Address : IEquatable<Address>
         if (workchain < -128 || workchain >= 128)
             throw new ArgumentException("Workchain must be int8 (-128 to 127)", nameof(workchain));
 
-        if (hash == null || hash.Length != HashSize)
+        if (hash is not { Length: HashSize })
             throw new ArgumentException($"Hash must be exactly {HashSize} bytes", nameof(hash));
 
         byte[] hashCopy = new byte[HashSize];
@@ -210,10 +204,8 @@ public readonly struct Address : IEquatable<Address>
         {
             int hashCode = Workchain;
             if (Hash != null)
-            {
                 foreach (byte b in Hash)
                     hashCode = (hashCode * 31) ^ b;
-            }
             return hashCode;
         }
     }

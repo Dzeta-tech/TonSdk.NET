@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TonSdk.Core.boc;
+namespace TonSdk.Core.Boc;
 
 public static class BocUtils
 {

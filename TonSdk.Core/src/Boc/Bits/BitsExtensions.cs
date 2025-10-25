@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace TonSdk.Core.boc.bits;
+namespace TonSdk.Core.Boc.bits;
 
 public static class BitsPatterns
 {

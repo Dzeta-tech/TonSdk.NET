@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using TonSdk.Core.Addresses;
-using TonSdk.Core.boc;
-using TonSdk.Core.boc.bits;
-using TonSdk.Core.boc.Cells;
+using TonSdk.Core.Boc;
+using TonSdk.Core.Boc.bits;
+using TonSdk.Core.Boc.Cells;
 using TonSdk.Core.Cryptography;
 using TonSdk.Core.Economics;
 

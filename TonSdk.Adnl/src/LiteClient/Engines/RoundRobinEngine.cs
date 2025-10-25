@@ -20,13 +20,13 @@ public class RoundRobinEngine : ILiteEngine
             throw new ArgumentException("At least one engine is required", nameof(engines));
 
         this.engines = engines;
-        
+
         foreach (ILiteEngine engine in engines)
         {
             engine.Connected += () => Connected?.Invoke();
             engine.Ready += () => Ready?.Invoke();
             engine.Closed += () => Closed?.Invoke();
-            engine.Error += (e) => Error?.Invoke(e);
+            engine.Error += e => Error?.Invoke(e);
         }
     }
 
@@ -77,4 +77,3 @@ public class RoundRobinEngine : ILiteEngine
             engine.Dispose();
     }
 }
-

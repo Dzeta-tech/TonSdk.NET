@@ -60,7 +60,7 @@ public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
         if (amount < 0)
             throw new ArgumentException("Amount cannot be negative", nameof(amount));
 
-        BigInteger nanoValue = new BigInteger(amount * DecimalMultiplier);
+        BigInteger nanoValue = new(amount * DecimalMultiplier);
         return new Coins(nanoValue);
     }
 
@@ -120,7 +120,7 @@ public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
     /// </summary>
     public Coins Mul(decimal multiplier)
     {
-        BigInteger result = new BigInteger((decimal)NanoValue * multiplier);
+        BigInteger result = new((decimal)NanoValue * multiplier);
         return new Coins(result);
     }
 
@@ -132,7 +132,7 @@ public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
         if (divisor == 0)
             throw new DivideByZeroException("Cannot divide by zero");
 
-        BigInteger result = new BigInteger((decimal)NanoValue / divisor);
+        BigInteger result = new((decimal)NanoValue / divisor);
         return new Coins(result);
     }
 
@@ -173,10 +173,7 @@ public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
         string formatted = value.ToString($"F{DefaultDecimals}", CultureInfo.InvariantCulture);
 
         // Remove trailing zeros after decimal point
-        if (formatted.Contains("."))
-        {
-            formatted = formatted.TrimEnd('0').TrimEnd('.');
-        }
+        if (formatted.Contains(".")) formatted = formatted.TrimEnd('0').TrimEnd('.');
 
         return formatted;
     }
@@ -185,9 +182,20 @@ public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
 
     #region Comparison & Equality
 
-    public bool IsNegative() => NanoValue < 0;
-    public bool IsPositive() => NanoValue > 0;
-    public bool IsZero() => NanoValue == 0;
+    public bool IsNegative()
+    {
+        return NanoValue < 0;
+    }
+
+    public bool IsPositive()
+    {
+        return NanoValue > 0;
+    }
+
+    public bool IsZero()
+    {
+        return NanoValue == 0;
+    }
 
     public bool Equals(Coins other)
     {
@@ -209,17 +217,55 @@ public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
         return NanoValue.CompareTo(other.NanoValue);
     }
 
-    public static bool operator ==(Coins left, Coins right) => left.Equals(right);
-    public static bool operator !=(Coins left, Coins right) => !left.Equals(right);
-    public static bool operator <(Coins left, Coins right) => left.NanoValue < right.NanoValue;
-    public static bool operator >(Coins left, Coins right) => left.NanoValue > right.NanoValue;
-    public static bool operator <=(Coins left, Coins right) => left.NanoValue <= right.NanoValue;
-    public static bool operator >=(Coins left, Coins right) => left.NanoValue >= right.NanoValue;
+    public static bool operator ==(Coins left, Coins right)
+    {
+        return left.Equals(right);
+    }
 
-    public static Coins operator +(Coins left, Coins right) => left.Add(right);
-    public static Coins operator -(Coins left, Coins right) => left.Sub(right);
-    public static Coins operator *(Coins left, decimal right) => left.Mul(right);
-    public static Coins operator /(Coins left, decimal right) => left.Div(right);
+    public static bool operator !=(Coins left, Coins right)
+    {
+        return !left.Equals(right);
+    }
+
+    public static bool operator <(Coins left, Coins right)
+    {
+        return left.NanoValue < right.NanoValue;
+    }
+
+    public static bool operator >(Coins left, Coins right)
+    {
+        return left.NanoValue > right.NanoValue;
+    }
+
+    public static bool operator <=(Coins left, Coins right)
+    {
+        return left.NanoValue <= right.NanoValue;
+    }
+
+    public static bool operator >=(Coins left, Coins right)
+    {
+        return left.NanoValue >= right.NanoValue;
+    }
+
+    public static Coins operator +(Coins left, Coins right)
+    {
+        return left.Add(right);
+    }
+
+    public static Coins operator -(Coins left, Coins right)
+    {
+        return left.Sub(right);
+    }
+
+    public static Coins operator *(Coins left, decimal right)
+    {
+        return left.Mul(right);
+    }
+
+    public static Coins operator /(Coins left, decimal right)
+    {
+        return left.Div(right);
+    }
 
     #endregion
 }

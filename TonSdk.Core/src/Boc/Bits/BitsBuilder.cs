@@ -6,14 +6,13 @@ using System.Text;
 using TonSdk.Core.Addresses;
 using TonSdk.Core.Economics;
 
-namespace TonSdk.Core.boc.bits;
+namespace TonSdk.Core.Boc.bits;
 
 public abstract class BitsBuilderImpl<T, TU>(BitArray bits, int cnt)
     where T : BitsBuilderImpl<T, TU>
 {
-    protected int BitsCnt = cnt;
-
     protected BitArray _Data = bits;
+    protected int BitsCnt = cnt;
 
     public BitsBuilderImpl(int length = 1023) : this(new BitArray(length), 0)
     {
@@ -23,7 +22,7 @@ public abstract class BitsBuilderImpl<T, TU>(BitArray bits, int cnt)
 
     public int RemainderBits => _Data.Length - BitsCnt;
 
-    public Bits Data => new(BitArrayUtils.Slice(_Data, 0, BitsCnt));
+    public Bits Data => new(_Data.Slice(0, BitsCnt));
 
     protected void CheckBitsOverflow(Bits bits)
     {

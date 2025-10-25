@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
-using TonSdk.Core.boc.bits;
+using TonSdk.Core.Boc.bits;
 
 namespace TonSdk.Adnl.Adnl;
 
