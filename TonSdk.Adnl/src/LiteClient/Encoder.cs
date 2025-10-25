@@ -74,7 +74,7 @@ namespace TonSdk.Adnl.LiteClient
             return EncodeRequest(writer);
         }
 
-        public static (byte[], byte[]) EncodeBlock(BlockIdExt id)
+        public static (byte[], byte[]) EncodeBlock(TonNodeBlockIdExt id)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.GetBlock);
@@ -82,7 +82,7 @@ namespace TonSdk.Adnl.LiteClient
             return EncodeRequest(writer);
         }
 
-        public static (byte[], byte[]) EncodeBlockHeader(BlockIdExt id, uint mode = 0)
+        public static (byte[], byte[]) EncodeBlockHeader(TonNodeBlockIdExt id, uint mode = 0)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.GetBlockHeader);
@@ -91,7 +91,7 @@ namespace TonSdk.Adnl.LiteClient
             return EncodeRequest(writer);
         }
 
-        public static (byte[], byte[]) EncodeAllShardsInfo(BlockIdExt id)
+        public static (byte[], byte[]) EncodeAllShardsInfo(TonNodeBlockIdExt id)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.GetAllShardsInfo);
@@ -99,7 +99,7 @@ namespace TonSdk.Adnl.LiteClient
             return EncodeRequest(writer);
         }
 
-        public static (byte[], byte[]) EncodeLookupBlock(BlockId id, uint mode, long? lt, uint? utime)
+        public static (byte[], byte[]) EncodeLookupBlock(TonNodeBlockId id, uint mode, long? lt, uint? utime)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.LookupBlock);
@@ -113,10 +113,10 @@ namespace TonSdk.Adnl.LiteClient
         }
 
         public static (byte[], byte[]) EncodeListBlockTransactions(
-            BlockIdExt id,
+            TonNodeBlockIdExt id,
             uint count,
             uint mode,
-            TransactionId3 after)
+            LiteServerTransactionId3 after)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.ListBlockTransactions);
@@ -132,7 +132,7 @@ namespace TonSdk.Adnl.LiteClient
             return EncodeRequest(writer);
         }
 
-        public static (byte[], byte[]) EncodeAccountState(BlockIdExt id, AccountId account)
+        public static (byte[], byte[]) EncodeAccountState(TonNodeBlockIdExt id, LiteServerAccountId account)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.GetAccountState);
@@ -141,7 +141,7 @@ namespace TonSdk.Adnl.LiteClient
             return EncodeRequest(writer);
         }
 
-        public static (byte[], byte[]) EncodeTransactions(uint count, AccountId account, long lt, byte[] hash)
+        public static (byte[], byte[]) EncodeTransactions(uint count, LiteServerAccountId account, long lt, byte[] hash)
         {
             var writer = new TLWriteBuffer();
             writer.WriteUInt32(Functions.GetTransactions);

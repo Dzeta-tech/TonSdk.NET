@@ -62,7 +62,7 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get masterchain info
         /// </summary>
-        public async Task<MasterchainInfo> GetMasterchainInfo(
+        public async Task<LiteServerMasterchainInfo> GetMasterchainInfo(
             CancellationToken cancellationToken = default)
         {
             byte[] response = await _engine.QueryAsync(
@@ -75,7 +75,7 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get extended masterchain info
         /// </summary>
-        public async Task<MasterchainInfoExt> GetMasterchainInfoExt(
+        public async Task<LiteServerMasterchainInfoExt> GetMasterchainInfoExt(
             uint mode = 0,
             CancellationToken cancellationToken = default)
         {
@@ -89,7 +89,7 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get current time from the lite server
         /// </summary>
-        public async Task<CurrentTime> GetTime(
+        public async Task<LiteServerCurrentTime> GetTime(
             CancellationToken cancellationToken = default)
         {
             byte[] response = await _engine.QueryAsync(
@@ -115,8 +115,8 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get block data
         /// </summary>
-        public async Task<BlockData> GetBlock(
-            BlockIdExt id,
+        public async Task<LiteServerBlockData> GetBlock(
+            TonNodeBlockIdExt id,
             CancellationToken cancellationToken = default)
         {
             byte[] response = await _engine.QueryAsync(
@@ -129,8 +129,8 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get block header
         /// </summary>
-        public async Task<BlockHeader> GetBlockHeader(
-            BlockIdExt id,
+        public async Task<LiteServerBlockHeader> GetBlockHeader(
+            TonNodeBlockIdExt id,
             uint mode = 0,
             CancellationToken cancellationToken = default)
         {
@@ -144,8 +144,8 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get all shards info for a given masterchain block
         /// </summary>
-        public async Task<AllShardsInfo> GetAllShardsInfo(
-            BlockIdExt id,
+        public async Task<LiteServerAllShardsInfo> GetAllShardsInfo(
+            TonNodeBlockIdExt id,
             CancellationToken cancellationToken = default)
         {
             byte[] response = await _engine.QueryAsync(
@@ -158,7 +158,7 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Lookup block by workchain, shard, and optional parameters
         /// </summary>
-        public async Task<BlockHeader> LookupBlock(
+        public async Task<LiteServerBlockHeader> LookupBlock(
             int workchain,
             long shard,
             int? seqno = null,
@@ -171,7 +171,7 @@ namespace TonSdk.Adnl.LiteClient
             if (lt.HasValue) mode |= 2;
             if (utime.HasValue) mode |= 4;
 
-            var blockId = new BlockId(workchain, shard, seqno ?? 0);
+            var blockId = new TonNodeBlockId(workchain, shard, seqno ?? 0);
 
             byte[] response = await _engine.QueryAsync(
                 () => Encoder.EncodeLookupBlock(blockId, mode, lt, utime),
@@ -183,10 +183,10 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// List transactions in a block
         /// </summary>
-        public async Task<BlockTransactions> ListBlockTransactions(
-            BlockIdExt id,
+        public async Task<LiteServerBlockTransactions> ListBlockTransactions(
+            TonNodeBlockIdExt id,
             uint count = 1024,
-            TransactionId3 after = null,
+            LiteServerTransactionId3 after = null,
             bool reverseOrder = false,
             bool wantProof = false,
             CancellationToken cancellationToken = default)
@@ -206,9 +206,9 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get account state
         /// </summary>
-        public async Task<AccountState> GetAccountState(
-            BlockIdExt id,
-            AccountId account,
+        public async Task<LiteServerAccountState> GetAccountState(
+            TonNodeBlockIdExt id,
+            LiteServerAccountId account,
             CancellationToken cancellationToken = default)
         {
             byte[] response = await _engine.QueryAsync(
@@ -221,12 +221,12 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get account state by address
         /// </summary>
-        public async Task<AccountState> GetAccountState(
-            BlockIdExt id,
+        public async Task<LiteServerAccountState> GetAccountState(
+            TonNodeBlockIdExt id,
             Address address,
             CancellationToken cancellationToken = default)
         {
-            var accountId = new AccountId 
+            var accountId = new LiteServerAccountId 
             { 
                 Workchain = address.Workchain, 
                 Id = address.Hash.ToArray() 
@@ -237,9 +237,9 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Get transactions for an account
         /// </summary>
-        public async Task<TransactionList> GetTransactions(
+        public async Task<LiteServerTransactionList> GetTransactions(
             uint count,
-            AccountId account,
+            LiteServerAccountId account,
             long lt,
             byte[] hash,
             CancellationToken cancellationToken = default)

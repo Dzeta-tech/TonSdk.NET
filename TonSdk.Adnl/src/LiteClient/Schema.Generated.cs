@@ -1,10 +1,13 @@
 // Auto-generated from lite_api.tl
 // DO NOT EDIT MANUALLY
+// This is the protocol layer - raw TL types matching lite_api.tl exactly
+// For user-facing APIs, create domain models and map in LiteClient
 // Union types: Bool, adnl.Message, liteServer.BlockLink
+
+#nullable disable
 
 using System;
 using TonSdk.Adnl.TL;
-using TonSdk.Core;
 
 namespace TonSdk.Adnl.LiteClient
 {
@@ -13,33 +16,27 @@ namespace TonSdk.Adnl.LiteClient
     // ============================================================================
 
     /// <summary>
-    /// Base class for Bool
-    /// Implementations: BoolTrue, BoolFalse
-    /// </summary>
-    public abstract class Bool
-    {
-        public abstract uint Constructor { get; }
-        public abstract void WriteTo(TLWriteBuffer writer);
-    }
-
-    /// <summary>
-    /// Base class for adnl.Message
-    /// Implementations: AdnlMessageQuery, AdnlMessageAnswer
-    /// </summary>
-    public abstract class AdnlMessage
-    {
-        public abstract uint Constructor { get; }
-        public abstract void WriteTo(TLWriteBuffer writer);
-    }
-
-    /// <summary>
     /// Base class for liteServer.BlockLink
-    /// Implementations: BlockLinkBack, BlockLinkForward
+    /// Implementations: LiteServerBlockLinkBack, LiteServerBlockLinkForward
     /// </summary>
-    public abstract class BlockLink
+    public abstract class LiteServerBlockLink
     {
         public abstract uint Constructor { get; }
         public abstract void WriteTo(TLWriteBuffer writer);
+
+        public static LiteServerBlockLink ReadFrom(TLReadBuffer reader)
+        {
+            uint constructor = reader.ReadUInt32();
+            switch (constructor)
+            {
+                case 0x5353875B:
+                    return LiteServerBlockLinkBack.ReadFrom(reader);
+                case 0x775A5528:
+                    return LiteServerBlockLinkForward.ReadFrom(reader);
+                default:
+                    throw new Exception($"Unknown constructor 0x{constructor:X8} for liteServer.BlockLink");
+            }
+        }
     }
 
     // ============================================================================
@@ -49,13 +46,13 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// tonNode.blockId = tonNode.BlockId
     /// </summary>
-    public readonly struct BlockId
+    public readonly struct TonNodeBlockId
     {
         public readonly int Workchain;
         public readonly long Shard;
         public readonly int Seqno;
 
-        public BlockId(int workchain, long shard, int seqno)
+        public TonNodeBlockId(int workchain, long shard, int seqno)
         {
             Workchain = workchain;
             Shard = shard;
@@ -69,9 +66,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt32(Seqno);
         }
 
-        public static BlockId ReadFrom(TLReadBuffer reader)
+        public static TonNodeBlockId ReadFrom(TLReadBuffer reader)
         {
-            return new BlockId(
+            return new TonNodeBlockId(
                 reader.ReadInt32(),
                 reader.ReadInt64(),
                 reader.ReadInt32()
@@ -82,7 +79,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// tonNode.blockIdExt = tonNode.BlockIdExt
     /// </summary>
-    public readonly struct BlockIdExt
+    public readonly struct TonNodeBlockIdExt
     {
         public readonly int Workchain;
         public readonly long Shard;
@@ -90,7 +87,7 @@ namespace TonSdk.Adnl.LiteClient
         public readonly byte[] RootHash;
         public readonly byte[] FileHash;
 
-        public BlockIdExt(int workchain, long shard, int seqno, byte[] rootHash, byte[] fileHash)
+        public TonNodeBlockIdExt(int workchain, long shard, int seqno, byte[] rootHash, byte[] fileHash)
         {
             Workchain = workchain;
             Shard = shard;
@@ -108,9 +105,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBytes(FileHash, 32);
         }
 
-        public static BlockIdExt ReadFrom(TLReadBuffer reader)
+        public static TonNodeBlockIdExt ReadFrom(TLReadBuffer reader)
         {
-            return new BlockIdExt(
+            return new TonNodeBlockIdExt(
                 reader.ReadInt32(),
                 reader.ReadInt64(),
                 reader.ReadInt32(),
@@ -123,13 +120,13 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// tonNode.zeroStateIdExt = tonNode.ZeroStateIdExt
     /// </summary>
-    public readonly struct ZeroStateIdExt
+    public readonly struct TonNodeZeroStateIdExt
     {
         public readonly int Workchain;
         public readonly byte[] RootHash;
         public readonly byte[] FileHash;
 
-        public ZeroStateIdExt(int workchain, byte[] rootHash, byte[] fileHash)
+        public TonNodeZeroStateIdExt(int workchain, byte[] rootHash, byte[] fileHash)
         {
             Workchain = workchain;
             RootHash = rootHash;
@@ -143,9 +140,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBytes(FileHash, 32);
         }
 
-        public static ZeroStateIdExt ReadFrom(TLReadBuffer reader)
+        public static TonNodeZeroStateIdExt ReadFrom(TLReadBuffer reader)
         {
-            return new ZeroStateIdExt(
+            return new TonNodeZeroStateIdExt(
                 reader.ReadInt32(),
                 reader.ReadInt256(),
                 reader.ReadInt256()
@@ -160,7 +157,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.error = liteServer.Error
     /// </summary>
-    public class Error
+    public class LiteServerError
     {
         public const uint Constructor = 0x1BB566EA;
 
@@ -173,9 +170,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteString(Message);
         }
 
-        public static Error ReadFrom(TLReadBuffer reader)
+        public static LiteServerError ReadFrom(TLReadBuffer reader)
         {
-            return new Error
+            return new LiteServerError
             {
                 Code = reader.ReadInt32(),
                 Message = reader.ReadString(),
@@ -186,7 +183,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.accountId = liteServer.AccountId
     /// </summary>
-    public class AccountId
+    public class LiteServerAccountId
     {
         public const uint Constructor = 0x88729074;
 
@@ -199,9 +196,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBytes(Id, 32);
         }
 
-        public static AccountId ReadFrom(TLReadBuffer reader)
+        public static LiteServerAccountId ReadFrom(TLReadBuffer reader)
         {
-            return new AccountId
+            return new LiteServerAccountId
             {
                 Workchain = reader.ReadInt32(),
                 Id = reader.ReadInt256(),
@@ -212,7 +209,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.libraryEntry = liteServer.LibraryEntry
     /// </summary>
-    public class LibraryEntry
+    public class LiteServerLibraryEntry
     {
         public const uint Constructor = 0xFC3C1D28;
 
@@ -225,9 +222,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Data);
         }
 
-        public static LibraryEntry ReadFrom(TLReadBuffer reader)
+        public static LiteServerLibraryEntry ReadFrom(TLReadBuffer reader)
         {
-            return new LibraryEntry
+            return new LiteServerLibraryEntry
             {
                 Hash = reader.ReadInt256(),
                 Data = reader.ReadBuffer(),
@@ -238,13 +235,13 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.masterchainInfo = liteServer.MasterchainInfo
     /// </summary>
-    public class MasterchainInfo
+    public class LiteServerMasterchainInfo
     {
         public const uint Constructor = 0xF9333637;
 
-        public BlockIdExt Last { get; set; }
+        public TonNodeBlockIdExt Last { get; set; }
         public byte[] StateRootHash { get; set; } = Array.Empty<byte>();
-        public ZeroStateIdExt Init { get; set; }
+        public TonNodeZeroStateIdExt Init { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
@@ -253,13 +250,13 @@ namespace TonSdk.Adnl.LiteClient
             Init.WriteTo(writer);
         }
 
-        public static MasterchainInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerMasterchainInfo ReadFrom(TLReadBuffer reader)
         {
-            return new MasterchainInfo
+            return new LiteServerMasterchainInfo
             {
-                Last = BlockIdExt.ReadFrom(reader),
+                Last = TonNodeBlockIdExt.ReadFrom(reader),
                 StateRootHash = reader.ReadInt256(),
-                Init = ZeroStateIdExt.ReadFrom(reader),
+                Init = TonNodeZeroStateIdExt.ReadFrom(reader),
             };
         }
     }
@@ -267,18 +264,18 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.masterchainInfoExt = liteServer.MasterchainInfoExt
     /// </summary>
-    public class MasterchainInfoExt
+    public class LiteServerMasterchainInfoExt
     {
         public const uint Constructor = 0xAE76CCDA;
 
         public uint Mode { get; set; }
         public int Version { get; set; }
         public long Capabilities { get; set; }
-        public BlockIdExt Last { get; set; }
+        public TonNodeBlockIdExt Last { get; set; }
         public int LastUtime { get; set; }
         public int Now { get; set; }
         public byte[] StateRootHash { get; set; } = Array.Empty<byte>();
-        public ZeroStateIdExt Init { get; set; }
+        public TonNodeZeroStateIdExt Init { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
@@ -292,18 +289,18 @@ namespace TonSdk.Adnl.LiteClient
             Init.WriteTo(writer);
         }
 
-        public static MasterchainInfoExt ReadFrom(TLReadBuffer reader)
+        public static LiteServerMasterchainInfoExt ReadFrom(TLReadBuffer reader)
         {
-            return new MasterchainInfoExt
+            return new LiteServerMasterchainInfoExt
             {
                 Mode = reader.ReadUInt32(),
                 Version = reader.ReadInt32(),
                 Capabilities = reader.ReadInt64(),
-                Last = BlockIdExt.ReadFrom(reader),
+                Last = TonNodeBlockIdExt.ReadFrom(reader),
                 LastUtime = reader.ReadInt32(),
                 Now = reader.ReadInt32(),
                 StateRootHash = reader.ReadInt256(),
-                Init = ZeroStateIdExt.ReadFrom(reader),
+                Init = TonNodeZeroStateIdExt.ReadFrom(reader),
             };
         }
     }
@@ -311,7 +308,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.currentTime = liteServer.CurrentTime
     /// </summary>
-    public class CurrentTime
+    public class LiteServerCurrentTime
     {
         public const uint Constructor = 0x1D512914;
 
@@ -322,9 +319,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt32(Now);
         }
 
-        public static CurrentTime ReadFrom(TLReadBuffer reader)
+        public static LiteServerCurrentTime ReadFrom(TLReadBuffer reader)
         {
-            return new CurrentTime
+            return new LiteServerCurrentTime
             {
                 Now = reader.ReadInt32(),
             };
@@ -366,11 +363,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.blockData = liteServer.BlockData
     /// </summary>
-    public class BlockData
+    public class LiteServerBlockData
     {
         public const uint Constructor = 0x27A85F37;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public byte[] Data { get; set; } = Array.Empty<byte>();
 
         public  void WriteTo(TLWriteBuffer writer)
@@ -379,11 +376,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Data);
         }
 
-        public static BlockData ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockData ReadFrom(TLReadBuffer reader)
         {
-            return new BlockData
+            return new LiteServerBlockData
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Data = reader.ReadBuffer(),
             };
         }
@@ -392,11 +389,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.blockState = liteServer.BlockState
     /// </summary>
-    public class BlockState
+    public class LiteServerBlockState
     {
         public const uint Constructor = 0x6A14E75E;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public byte[] RootHash { get; set; } = Array.Empty<byte>();
         public byte[] FileHash { get; set; } = Array.Empty<byte>();
         public byte[] Data { get; set; } = Array.Empty<byte>();
@@ -409,11 +406,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Data);
         }
 
-        public static BlockState ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockState ReadFrom(TLReadBuffer reader)
         {
-            return new BlockState
+            return new LiteServerBlockState
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 RootHash = reader.ReadInt256(),
                 FileHash = reader.ReadInt256(),
                 Data = reader.ReadBuffer(),
@@ -424,11 +421,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.blockHeader = liteServer.BlockHeader
     /// </summary>
-    public class BlockHeader
+    public class LiteServerBlockHeader
     {
         public const uint Constructor = 0x071783EB;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public uint Mode { get; set; }
         public byte[] HeaderProof { get; set; } = Array.Empty<byte>();
 
@@ -439,11 +436,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(HeaderProof);
         }
 
-        public static BlockHeader ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockHeader ReadFrom(TLReadBuffer reader)
         {
-            return new BlockHeader
+            return new LiteServerBlockHeader
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Mode = reader.ReadUInt32(),
                 HeaderProof = reader.ReadBuffer(),
             };
@@ -453,7 +450,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.sendMsgStatus = liteServer.SendMsgStatus
     /// </summary>
-    public class SendMsgStatus
+    public class LiteServerSendMsgStatus
     {
         public const uint Constructor = 0x0D5B50AB;
 
@@ -464,9 +461,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt32(Status);
         }
 
-        public static SendMsgStatus ReadFrom(TLReadBuffer reader)
+        public static LiteServerSendMsgStatus ReadFrom(TLReadBuffer reader)
         {
-            return new SendMsgStatus
+            return new LiteServerSendMsgStatus
             {
                 Status = reader.ReadInt32(),
             };
@@ -476,12 +473,12 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.accountState = liteServer.AccountState
     /// </summary>
-    public class AccountState
+    public class LiteServerAccountState
     {
         public const uint Constructor = 0x7F151E0C;
 
-        public BlockIdExt Id { get; set; }
-        public BlockIdExt Shardblk { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Shardblk { get; set; }
         public byte[] ShardProof { get; set; } = Array.Empty<byte>();
         public byte[] Proof { get; set; } = Array.Empty<byte>();
         public byte[] State { get; set; } = Array.Empty<byte>();
@@ -495,12 +492,12 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(State);
         }
 
-        public static AccountState ReadFrom(TLReadBuffer reader)
+        public static LiteServerAccountState ReadFrom(TLReadBuffer reader)
         {
-            return new AccountState
+            return new LiteServerAccountState
             {
-                Id = BlockIdExt.ReadFrom(reader),
-                Shardblk = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
+                Shardblk = TonNodeBlockIdExt.ReadFrom(reader),
                 ShardProof = reader.ReadBuffer(),
                 Proof = reader.ReadBuffer(),
                 State = reader.ReadBuffer(),
@@ -511,13 +508,13 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.runMethodResult = liteServer.RunMethodResult
     /// </summary>
-    public class RunMethodResult
+    public class LiteServerRunMethodResult
     {
         public const uint Constructor = 0xB9CA2418;
 
         public uint Mode { get; set; }
-        public BlockIdExt Id { get; set; }
-        public BlockIdExt Shardblk { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Shardblk { get; set; }
         public byte[] ShardProof { get; set; } = Array.Empty<byte>();
         public byte[] Proof { get; set; } = Array.Empty<byte>();
         public byte[] StateProof { get; set; } = Array.Empty<byte>();
@@ -558,12 +555,12 @@ namespace TonSdk.Adnl.LiteClient
             }
         }
 
-        public static RunMethodResult ReadFrom(TLReadBuffer reader)
+        public static LiteServerRunMethodResult ReadFrom(TLReadBuffer reader)
         {
-            var result = new RunMethodResult();
+            var result = new LiteServerRunMethodResult();
             result.Mode = reader.ReadUInt32();
-            result.Id = BlockIdExt.ReadFrom(reader);
-            result.Shardblk = BlockIdExt.ReadFrom(reader);
+            result.Id = TonNodeBlockIdExt.ReadFrom(reader);
+            result.Shardblk = TonNodeBlockIdExt.ReadFrom(reader);
             if ((result.Mode & (1u << 0)) != 0)
                 result.ShardProof = reader.ReadBuffer();
             if ((result.Mode & (1u << 0)) != 0)
@@ -584,12 +581,12 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.shardInfo = liteServer.ShardInfo
     /// </summary>
-    public class ShardInfo
+    public class LiteServerShardInfo
     {
         public const uint Constructor = 0x8943A75D;
 
-        public BlockIdExt Id { get; set; }
-        public BlockIdExt Shardblk { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Shardblk { get; set; }
         public byte[] ShardProof { get; set; } = Array.Empty<byte>();
         public byte[] ShardDescr { get; set; } = Array.Empty<byte>();
 
@@ -601,12 +598,12 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(ShardDescr);
         }
 
-        public static ShardInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerShardInfo ReadFrom(TLReadBuffer reader)
         {
-            return new ShardInfo
+            return new LiteServerShardInfo
             {
-                Id = BlockIdExt.ReadFrom(reader),
-                Shardblk = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
+                Shardblk = TonNodeBlockIdExt.ReadFrom(reader),
                 ShardProof = reader.ReadBuffer(),
                 ShardDescr = reader.ReadBuffer(),
             };
@@ -616,11 +613,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.allShardsInfo = liteServer.AllShardsInfo
     /// </summary>
-    public class AllShardsInfo
+    public class LiteServerAllShardsInfo
     {
         public const uint Constructor = 0x26DFD53B;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public byte[] Proof { get; set; } = Array.Empty<byte>();
         public byte[] Data { get; set; } = Array.Empty<byte>();
 
@@ -631,11 +628,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Data);
         }
 
-        public static AllShardsInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerAllShardsInfo ReadFrom(TLReadBuffer reader)
         {
-            return new AllShardsInfo
+            return new LiteServerAllShardsInfo
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Proof = reader.ReadBuffer(),
                 Data = reader.ReadBuffer(),
             };
@@ -645,11 +642,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.transactionInfo = liteServer.TransactionInfo
     /// </summary>
-    public class TransactionInfo
+    public class LiteServerTransactionInfo
     {
         public const uint Constructor = 0x8BBF0C77;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public byte[] Proof { get; set; } = Array.Empty<byte>();
         public byte[] Transaction { get; set; } = Array.Empty<byte>();
 
@@ -660,11 +657,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Transaction);
         }
 
-        public static TransactionInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerTransactionInfo ReadFrom(TLReadBuffer reader)
         {
-            return new TransactionInfo
+            return new LiteServerTransactionInfo
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Proof = reader.ReadBuffer(),
                 Transaction = reader.ReadBuffer(),
             };
@@ -674,39 +671,47 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.transactionList = liteServer.TransactionList
     /// </summary>
-    public class TransactionList
+    public class LiteServerTransactionList
     {
         public const uint Constructor = 0xED0EC787;
 
-        public BlockIdExt[] Ids { get; set; } = Array.Empty<BlockIdExt>();
+        public TonNodeBlockIdExt[] Ids { get; set; } = Array.Empty<TonNodeBlockIdExt>();
         public byte[] Transactions { get; set; } = Array.Empty<byte>();
 
         public  void WriteTo(TLWriteBuffer writer)
         {
-            // TODO: Write array Ids
+            writer.WriteUInt32((uint)Ids.Length);
+                foreach (var item in Ids)
+                {
+                    item.WriteTo(writer);
+                }
             writer.WriteBuffer(Transactions);
         }
 
-        public static TransactionList ReadFrom(TLReadBuffer reader)
+        public static LiteServerTransactionList ReadFrom(TLReadBuffer reader)
         {
-            return new TransactionList
+            var result = new LiteServerTransactionList();
+            uint idsCount = reader.ReadUInt32();
+            result.Ids = new TonNodeBlockIdExt[idsCount];
+            for (int i = 0; i < idsCount; i++)
             {
-                Ids = Array.Empty<BlockIdExt>(),
-                Transactions = reader.ReadBuffer(),
-            };
+                result.Ids[i] = TonNodeBlockIdExt.ReadFrom(reader);
+            }
+            result.Transactions = reader.ReadBuffer();
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.transactionMetadata = liteServer.TransactionMetadata
     /// </summary>
-    public class TransactionMetadata
+    public class LiteServerTransactionMetadata
     {
         public const uint Constructor = 0xFE240165;
 
         public uint Mode { get; set; }
         public int Depth { get; set; }
-        public AccountId Initiator { get; set; }
+        public LiteServerAccountId Initiator { get; set; }
         public long InitiatorLt { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
@@ -717,13 +722,13 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt64(InitiatorLt);
         }
 
-        public static TransactionMetadata ReadFrom(TLReadBuffer reader)
+        public static LiteServerTransactionMetadata ReadFrom(TLReadBuffer reader)
         {
-            return new TransactionMetadata
+            return new LiteServerTransactionMetadata
             {
                 Mode = reader.ReadUInt32(),
                 Depth = reader.ReadInt32(),
-                Initiator = AccountId.ReadFrom(reader),
+                Initiator = LiteServerAccountId.ReadFrom(reader),
                 InitiatorLt = reader.ReadInt64(),
             };
         }
@@ -732,26 +737,26 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.transactionId = liteServer.TransactionId
     /// </summary>
-    public class TransactionId
+    public class LiteServerTransactionId
     {
         public const uint Constructor = 0xE944EBD2;
 
         public uint Mode { get; set; }
-        public Address? Account { get; set; }
-        public long? Lt { get; set; }
+        public byte[] Account { get; set; } = Array.Empty<byte>();
+        public long Lt { get; set; }
         public byte[] Hash { get; set; } = Array.Empty<byte>();
-        public TransactionMetadata? Metadata { get; set; }
+        public LiteServerTransactionMetadata Metadata { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
             writer.WriteUInt32(Mode);
             if ((Mode & (1u << 0)) != 0)
             {
-                writer.WriteBytes(Account.Value.Hash.ToArray(), 32);
+                writer.WriteBytes(Account, 32);
             }
             if ((Mode & (1u << 1)) != 0)
             {
-                writer.WriteInt64(Lt.Value);
+                writer.WriteInt64(Lt);
             }
             if ((Mode & (1u << 2)) != 0)
             {
@@ -763,18 +768,18 @@ namespace TonSdk.Adnl.LiteClient
             }
         }
 
-        public static TransactionId ReadFrom(TLReadBuffer reader)
+        public static LiteServerTransactionId ReadFrom(TLReadBuffer reader)
         {
-            var result = new TransactionId();
+            var result = new LiteServerTransactionId();
             result.Mode = reader.ReadUInt32();
             if ((result.Mode & (1u << 0)) != 0)
-                result.Account = new Address(0, reader.ReadInt256());
+                result.Account = reader.ReadInt256();
             if ((result.Mode & (1u << 1)) != 0)
                 result.Lt = reader.ReadInt64();
             if ((result.Mode & (1u << 2)) != 0)
                 result.Hash = reader.ReadInt256();
             if ((result.Mode & (1u << 8)) != 0)
-                result.Metadata = TransactionMetadata.ReadFrom(reader);
+                result.Metadata = LiteServerTransactionMetadata.ReadFrom(reader);
             return result;
         }
     }
@@ -782,24 +787,24 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.transactionId3 = liteServer.TransactionId3
     /// </summary>
-    public class TransactionId3
+    public class LiteServerTransactionId3
     {
         public const uint Constructor = 0xAD4463EC;
 
-        public Address Account { get; set; }
+        public byte[] Account { get; set; } = Array.Empty<byte>();
         public long Lt { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
-            writer.WriteBytes(Account.Hash.ToArray(), 32);
+            writer.WriteBytes(Account, 32);
             writer.WriteInt64(Lt);
         }
 
-        public static TransactionId3 ReadFrom(TLReadBuffer reader)
+        public static LiteServerTransactionId3 ReadFrom(TLReadBuffer reader)
         {
-            return new TransactionId3
+            return new LiteServerTransactionId3
             {
-                Account = new Address(0, reader.ReadInt256()),
+                Account = reader.ReadInt256(),
                 Lt = reader.ReadInt64(),
             };
         }
@@ -808,14 +813,14 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.blockTransactions = liteServer.BlockTransactions
     /// </summary>
-    public class BlockTransactions
+    public class LiteServerBlockTransactions
     {
         public const uint Constructor = 0x01FB4F1A;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public uint ReqCount { get; set; }
         public bool Incomplete { get; set; }
-        public TransactionId[] Ids { get; set; } = Array.Empty<TransactionId>();
+        public LiteServerTransactionId[] Ids { get; set; } = Array.Empty<LiteServerTransactionId>();
         public byte[] Proof { get; set; } = Array.Empty<byte>();
 
         public  void WriteTo(TLWriteBuffer writer)
@@ -823,31 +828,39 @@ namespace TonSdk.Adnl.LiteClient
             Id.WriteTo(writer);
             writer.WriteUInt32(ReqCount);
             writer.WriteBool(Incomplete);
-            // TODO: Write array Ids
+            writer.WriteUInt32((uint)Ids.Length);
+                foreach (var item in Ids)
+                {
+                    item.WriteTo(writer);
+                }
             writer.WriteBuffer(Proof);
         }
 
-        public static BlockTransactions ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockTransactions ReadFrom(TLReadBuffer reader)
         {
-            return new BlockTransactions
+            var result = new LiteServerBlockTransactions();
+            result.Id = TonNodeBlockIdExt.ReadFrom(reader);
+            result.ReqCount = reader.ReadUInt32();
+            result.Incomplete = reader.ReadBool();
+            uint idsCount = reader.ReadUInt32();
+            result.Ids = new LiteServerTransactionId[idsCount];
+            for (int i = 0; i < idsCount; i++)
             {
-                Id = BlockIdExt.ReadFrom(reader),
-                ReqCount = reader.ReadUInt32(),
-                Incomplete = reader.ReadBool(),
-                Ids = Array.Empty<TransactionId>(),
-                Proof = reader.ReadBuffer(),
-            };
+                result.Ids[i] = LiteServerTransactionId.ReadFrom(reader);
+            }
+            result.Proof = reader.ReadBuffer();
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.blockTransactionsExt = liteServer.BlockTransactionsExt
     /// </summary>
-    public class BlockTransactionsExt
+    public class LiteServerBlockTransactionsExt
     {
         public const uint Constructor = 0xC495AF34;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public uint ReqCount { get; set; }
         public bool Incomplete { get; set; }
         public byte[] Transactions { get; set; } = Array.Empty<byte>();
@@ -862,11 +875,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Proof);
         }
 
-        public static BlockTransactionsExt ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockTransactionsExt ReadFrom(TLReadBuffer reader)
         {
-            return new BlockTransactionsExt
+            return new LiteServerBlockTransactionsExt
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 ReqCount = reader.ReadUInt32(),
                 Incomplete = reader.ReadBool(),
                 Transactions = reader.ReadBuffer(),
@@ -916,31 +929,39 @@ namespace TonSdk.Adnl.LiteClient
         {
             writer.WriteInt32(ValidatorSetHash);
             writer.WriteInt32(CatchainSeqno);
-            // TODO: Write array Signatures
+            writer.WriteUInt32((uint)Signatures.Length);
+                foreach (var item in Signatures)
+                {
+                    item.WriteTo(writer);
+                }
         }
 
         public static LiteServerSignatureSet ReadFrom(TLReadBuffer reader)
         {
-            return new LiteServerSignatureSet
+            var result = new LiteServerSignatureSet();
+            result.ValidatorSetHash = reader.ReadInt32();
+            result.CatchainSeqno = reader.ReadInt32();
+            uint signaturesCount = reader.ReadUInt32();
+            result.Signatures = new LiteServerSignature[signaturesCount];
+            for (int i = 0; i < signaturesCount; i++)
             {
-                ValidatorSetHash = reader.ReadInt32(),
-                CatchainSeqno = reader.ReadInt32(),
-                Signatures = Array.Empty<LiteServerSignature>(),
-            };
+                result.Signatures[i] = LiteServerSignature.ReadFrom(reader);
+            }
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.blockLinkBack = liteServer.BlockLink
-    /// Inherits from: BlockLink
+    /// Inherits from: LiteServerBlockLink
     /// </summary>
-    public class BlockLinkBack : BlockLink
+    public class LiteServerBlockLinkBack : LiteServerBlockLink
     {
         public override uint Constructor => 0x5353875B;
 
         public bool ToKeyBlock { get; set; }
-        public BlockIdExt From { get; set; }
-        public BlockIdExt To { get; set; }
+        public TonNodeBlockIdExt From { get; set; }
+        public TonNodeBlockIdExt To { get; set; }
         public byte[] DestProof { get; set; } = Array.Empty<byte>();
         public byte[] Proof { get; set; } = Array.Empty<byte>();
         public byte[] StateProof { get; set; } = Array.Empty<byte>();
@@ -955,13 +976,13 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(StateProof);
         }
 
-        public static BlockLinkBack ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockLinkBack ReadFrom(TLReadBuffer reader)
         {
-            return new BlockLinkBack
+            return new LiteServerBlockLinkBack
             {
                 ToKeyBlock = reader.ReadBool(),
-                From = BlockIdExt.ReadFrom(reader),
-                To = BlockIdExt.ReadFrom(reader),
+                From = TonNodeBlockIdExt.ReadFrom(reader),
+                To = TonNodeBlockIdExt.ReadFrom(reader),
                 DestProof = reader.ReadBuffer(),
                 Proof = reader.ReadBuffer(),
                 StateProof = reader.ReadBuffer(),
@@ -971,15 +992,15 @@ namespace TonSdk.Adnl.LiteClient
 
     /// <summary>
     /// liteServer.blockLinkForward = liteServer.BlockLink
-    /// Inherits from: BlockLink
+    /// Inherits from: LiteServerBlockLink
     /// </summary>
-    public class BlockLinkForward : BlockLink
+    public class LiteServerBlockLinkForward : LiteServerBlockLink
     {
         public override uint Constructor => 0x775A5528;
 
         public bool ToKeyBlock { get; set; }
-        public BlockIdExt From { get; set; }
-        public BlockIdExt To { get; set; }
+        public TonNodeBlockIdExt From { get; set; }
+        public TonNodeBlockIdExt To { get; set; }
         public byte[] DestProof { get; set; } = Array.Empty<byte>();
         public byte[] ConfigProof { get; set; } = Array.Empty<byte>();
         public LiteServerSignatureSet Signatures { get; set; }
@@ -994,13 +1015,13 @@ namespace TonSdk.Adnl.LiteClient
             Signatures.WriteTo(writer);
         }
 
-        public static BlockLinkForward ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockLinkForward ReadFrom(TLReadBuffer reader)
         {
-            return new BlockLinkForward
+            return new LiteServerBlockLinkForward
             {
                 ToKeyBlock = reader.ReadBool(),
-                From = BlockIdExt.ReadFrom(reader),
-                To = BlockIdExt.ReadFrom(reader),
+                From = TonNodeBlockIdExt.ReadFrom(reader),
+                To = TonNodeBlockIdExt.ReadFrom(reader),
                 DestProof = reader.ReadBuffer(),
                 ConfigProof = reader.ReadBuffer(),
                 Signatures = LiteServerSignatureSet.ReadFrom(reader),
@@ -1011,44 +1032,52 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.partialBlockProof = liteServer.PartialBlockProof
     /// </summary>
-    public class PartialBlockProof
+    public class LiteServerPartialBlockProof
     {
         public const uint Constructor = 0xF3BB3510;
 
         public bool Complete { get; set; }
-        public BlockIdExt From { get; set; }
-        public BlockIdExt To { get; set; }
-        public BlockLink[] Steps { get; set; } = Array.Empty<BlockLink>();
+        public TonNodeBlockIdExt From { get; set; }
+        public TonNodeBlockIdExt To { get; set; }
+        public LiteServerBlockLink[] Steps { get; set; } = Array.Empty<LiteServerBlockLink>();
 
         public  void WriteTo(TLWriteBuffer writer)
         {
             writer.WriteBool(Complete);
             From.WriteTo(writer);
             To.WriteTo(writer);
-            // TODO: Write array Steps
+            writer.WriteUInt32((uint)Steps.Length);
+                foreach (var item in Steps)
+                {
+                    item.WriteTo(writer);
+                }
         }
 
-        public static PartialBlockProof ReadFrom(TLReadBuffer reader)
+        public static LiteServerPartialBlockProof ReadFrom(TLReadBuffer reader)
         {
-            return new PartialBlockProof
+            var result = new LiteServerPartialBlockProof();
+            result.Complete = reader.ReadBool();
+            result.From = TonNodeBlockIdExt.ReadFrom(reader);
+            result.To = TonNodeBlockIdExt.ReadFrom(reader);
+            uint stepsCount = reader.ReadUInt32();
+            result.Steps = new LiteServerBlockLink[stepsCount];
+            for (int i = 0; i < stepsCount; i++)
             {
-                Complete = reader.ReadBool(),
-                From = BlockIdExt.ReadFrom(reader),
-                To = BlockIdExt.ReadFrom(reader),
-                Steps = Array.Empty<BlockLink>(),
-            };
+                result.Steps[i] = LiteServerBlockLink.ReadFrom(reader);
+            }
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.configInfo = liteServer.ConfigInfo
     /// </summary>
-    public class ConfigInfo
+    public class LiteServerConfigInfo
     {
         public const uint Constructor = 0xC87640D7;
 
         public uint Mode { get; set; }
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public byte[] StateProof { get; set; } = Array.Empty<byte>();
         public byte[] ConfigProof { get; set; } = Array.Empty<byte>();
 
@@ -1060,12 +1089,12 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(ConfigProof);
         }
 
-        public static ConfigInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerConfigInfo ReadFrom(TLReadBuffer reader)
         {
-            return new ConfigInfo
+            return new LiteServerConfigInfo
             {
                 Mode = reader.ReadUInt32(),
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 StateProof = reader.ReadBuffer(),
                 ConfigProof = reader.ReadBuffer(),
             };
@@ -1075,12 +1104,12 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.validatorStats = liteServer.ValidatorStats
     /// </summary>
-    public class ValidatorStats
+    public class LiteServerValidatorStats
     {
         public const uint Constructor = 0xEBB8ABD9;
 
         public uint Mode { get; set; }
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public int Count { get; set; }
         public bool Complete { get; set; }
         public byte[] StateProof { get; set; } = Array.Empty<byte>();
@@ -1096,12 +1125,12 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(DataProof);
         }
 
-        public static ValidatorStats ReadFrom(TLReadBuffer reader)
+        public static LiteServerValidatorStats ReadFrom(TLReadBuffer reader)
         {
-            return new ValidatorStats
+            return new LiteServerValidatorStats
             {
                 Mode = reader.ReadUInt32(),
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Count = reader.ReadInt32(),
                 Complete = reader.ReadBool(),
                 StateProof = reader.ReadBuffer(),
@@ -1113,36 +1142,44 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.libraryResult = liteServer.LibraryResult
     /// </summary>
-    public class LibraryResult
+    public class LiteServerLibraryResult
     {
         public const uint Constructor = 0x6A34CEC1;
 
-        public LibraryEntry[] Result { get; set; } = Array.Empty<LibraryEntry>();
+        public LiteServerLibraryEntry[] Result { get; set; } = Array.Empty<LiteServerLibraryEntry>();
 
         public  void WriteTo(TLWriteBuffer writer)
         {
-            // TODO: Write array Result
+            writer.WriteUInt32((uint)Result.Length);
+                foreach (var item in Result)
+                {
+                    item.WriteTo(writer);
+                }
         }
 
-        public static LibraryResult ReadFrom(TLReadBuffer reader)
+        public static LiteServerLibraryResult ReadFrom(TLReadBuffer reader)
         {
-            return new LibraryResult
+            var result = new LiteServerLibraryResult();
+            uint resultCount = reader.ReadUInt32();
+            result.Result = new LiteServerLibraryEntry[resultCount];
+            for (int i = 0; i < resultCount; i++)
             {
-                Result = Array.Empty<LibraryEntry>(),
-            };
+                result.Result[i] = LiteServerLibraryEntry.ReadFrom(reader);
+            }
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.libraryResultWithProof = liteServer.LibraryResultWithProof
     /// </summary>
-    public class LibraryResultWithProof
+    public class LiteServerLibraryResultWithProof
     {
         public const uint Constructor = 0xEE983C56;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public uint Mode { get; set; }
-        public LibraryEntry[] Result { get; set; } = Array.Empty<LibraryEntry>();
+        public LiteServerLibraryEntry[] Result { get; set; } = Array.Empty<LiteServerLibraryEntry>();
         public byte[] StateProof { get; set; } = Array.Empty<byte>();
         public byte[] DataProof { get; set; } = Array.Empty<byte>();
 
@@ -1150,32 +1187,40 @@ namespace TonSdk.Adnl.LiteClient
         {
             Id.WriteTo(writer);
             writer.WriteUInt32(Mode);
-            // TODO: Write array Result
+            writer.WriteUInt32((uint)Result.Length);
+                foreach (var item in Result)
+                {
+                    item.WriteTo(writer);
+                }
             writer.WriteBuffer(StateProof);
             writer.WriteBuffer(DataProof);
         }
 
-        public static LibraryResultWithProof ReadFrom(TLReadBuffer reader)
+        public static LiteServerLibraryResultWithProof ReadFrom(TLReadBuffer reader)
         {
-            return new LibraryResultWithProof
+            var result = new LiteServerLibraryResultWithProof();
+            result.Id = TonNodeBlockIdExt.ReadFrom(reader);
+            result.Mode = reader.ReadUInt32();
+            uint resultCount = reader.ReadUInt32();
+            result.Result = new LiteServerLibraryEntry[resultCount];
+            for (int i = 0; i < resultCount; i++)
             {
-                Id = BlockIdExt.ReadFrom(reader),
-                Mode = reader.ReadUInt32(),
-                Result = Array.Empty<LibraryEntry>(),
-                StateProof = reader.ReadBuffer(),
-                DataProof = reader.ReadBuffer(),
-            };
+                result.Result[i] = LiteServerLibraryEntry.ReadFrom(reader);
+            }
+            result.StateProof = reader.ReadBuffer();
+            result.DataProof = reader.ReadBuffer();
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.shardBlockLink = liteServer.ShardBlockLink
     /// </summary>
-    public class ShardBlockLink
+    public class LiteServerShardBlockLink
     {
         public const uint Constructor = 0xDDD11B76;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public byte[] Proof { get; set; } = Array.Empty<byte>();
 
         public  void WriteTo(TLWriteBuffer writer)
@@ -1184,11 +1229,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(Proof);
         }
 
-        public static ShardBlockLink ReadFrom(TLReadBuffer reader)
+        public static LiteServerShardBlockLink ReadFrom(TLReadBuffer reader)
         {
-            return new ShardBlockLink
+            return new LiteServerShardBlockLink
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Proof = reader.ReadBuffer(),
             };
         }
@@ -1197,42 +1242,50 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.shardBlockProof = liteServer.ShardBlockProof
     /// </summary>
-    public class ShardBlockProof
+    public class LiteServerShardBlockProof
     {
         public const uint Constructor = 0x330401A1;
 
-        public BlockIdExt MasterchainId { get; set; }
-        public ShardBlockLink[] Links { get; set; } = Array.Empty<ShardBlockLink>();
+        public TonNodeBlockIdExt MasterchainId { get; set; }
+        public LiteServerShardBlockLink[] Links { get; set; } = Array.Empty<LiteServerShardBlockLink>();
 
         public  void WriteTo(TLWriteBuffer writer)
         {
             MasterchainId.WriteTo(writer);
-            // TODO: Write array Links
+            writer.WriteUInt32((uint)Links.Length);
+                foreach (var item in Links)
+                {
+                    item.WriteTo(writer);
+                }
         }
 
-        public static ShardBlockProof ReadFrom(TLReadBuffer reader)
+        public static LiteServerShardBlockProof ReadFrom(TLReadBuffer reader)
         {
-            return new ShardBlockProof
+            var result = new LiteServerShardBlockProof();
+            result.MasterchainId = TonNodeBlockIdExt.ReadFrom(reader);
+            uint linksCount = reader.ReadUInt32();
+            result.Links = new LiteServerShardBlockLink[linksCount];
+            for (int i = 0; i < linksCount; i++)
             {
-                MasterchainId = BlockIdExt.ReadFrom(reader),
-                Links = Array.Empty<ShardBlockLink>(),
-            };
+                result.Links[i] = LiteServerShardBlockLink.ReadFrom(reader);
+            }
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.lookupBlockResult = liteServer.LookupBlockResult
     /// </summary>
-    public class LookupBlockResult
+    public class LiteServerLookupBlockResult
     {
         public const uint Constructor = 0x8850F75A;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public uint Mode { get; set; }
-        public BlockIdExt McBlockId { get; set; }
+        public TonNodeBlockIdExt McBlockId { get; set; }
         public byte[] ClientMcStateProof { get; set; } = Array.Empty<byte>();
         public byte[] McBlockProof { get; set; } = Array.Empty<byte>();
-        public ShardBlockLink[] ShardLinks { get; set; } = Array.Empty<ShardBlockLink>();
+        public LiteServerShardBlockLink[] ShardLinks { get; set; } = Array.Empty<LiteServerShardBlockLink>();
         public byte[] Header { get; set; } = Array.Empty<byte>();
         public byte[] PrevHeader { get; set; } = Array.Empty<byte>();
 
@@ -1243,35 +1296,43 @@ namespace TonSdk.Adnl.LiteClient
             McBlockId.WriteTo(writer);
             writer.WriteBuffer(ClientMcStateProof);
             writer.WriteBuffer(McBlockProof);
-            // TODO: Write array ShardLinks
+            writer.WriteUInt32((uint)ShardLinks.Length);
+                foreach (var item in ShardLinks)
+                {
+                    item.WriteTo(writer);
+                }
             writer.WriteBuffer(Header);
             writer.WriteBuffer(PrevHeader);
         }
 
-        public static LookupBlockResult ReadFrom(TLReadBuffer reader)
+        public static LiteServerLookupBlockResult ReadFrom(TLReadBuffer reader)
         {
-            return new LookupBlockResult
+            var result = new LiteServerLookupBlockResult();
+            result.Id = TonNodeBlockIdExt.ReadFrom(reader);
+            result.Mode = reader.ReadUInt32();
+            result.McBlockId = TonNodeBlockIdExt.ReadFrom(reader);
+            result.ClientMcStateProof = reader.ReadBuffer();
+            result.McBlockProof = reader.ReadBuffer();
+            uint shardlinksCount = reader.ReadUInt32();
+            result.ShardLinks = new LiteServerShardBlockLink[shardlinksCount];
+            for (int i = 0; i < shardlinksCount; i++)
             {
-                Id = BlockIdExt.ReadFrom(reader),
-                Mode = reader.ReadUInt32(),
-                McBlockId = BlockIdExt.ReadFrom(reader),
-                ClientMcStateProof = reader.ReadBuffer(),
-                McBlockProof = reader.ReadBuffer(),
-                ShardLinks = Array.Empty<ShardBlockLink>(),
-                Header = reader.ReadBuffer(),
-                PrevHeader = reader.ReadBuffer(),
-            };
+                result.ShardLinks[i] = LiteServerShardBlockLink.ReadFrom(reader);
+            }
+            result.Header = reader.ReadBuffer();
+            result.PrevHeader = reader.ReadBuffer();
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.outMsgQueueSize = liteServer.OutMsgQueueSize
     /// </summary>
-    public class OutMsgQueueSize
+    public class LiteServerOutMsgQueueSize
     {
         public const uint Constructor = 0xFE7CB74A;
 
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public int Size { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
@@ -1280,11 +1341,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt32(Size);
         }
 
-        public static OutMsgQueueSize ReadFrom(TLReadBuffer reader)
+        public static LiteServerOutMsgQueueSize ReadFrom(TLReadBuffer reader)
         {
-            return new OutMsgQueueSize
+            return new LiteServerOutMsgQueueSize
             {
-                Id = BlockIdExt.ReadFrom(reader),
+                Id = TonNodeBlockIdExt.ReadFrom(reader),
                 Size = reader.ReadInt32(),
             };
         }
@@ -1293,38 +1354,46 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.outMsgQueueSizes = liteServer.OutMsgQueueSizes
     /// </summary>
-    public class OutMsgQueueSizes
+    public class LiteServerOutMsgQueueSizes
     {
         public const uint Constructor = 0x2DE458AE;
 
-        public OutMsgQueueSize[] Shards { get; set; } = Array.Empty<OutMsgQueueSize>();
+        public LiteServerOutMsgQueueSize[] Shards { get; set; } = Array.Empty<LiteServerOutMsgQueueSize>();
         public int ExtMsgQueueSizeLimit { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
-            // TODO: Write array Shards
+            writer.WriteUInt32((uint)Shards.Length);
+                foreach (var item in Shards)
+                {
+                    item.WriteTo(writer);
+                }
             writer.WriteInt32(ExtMsgQueueSizeLimit);
         }
 
-        public static OutMsgQueueSizes ReadFrom(TLReadBuffer reader)
+        public static LiteServerOutMsgQueueSizes ReadFrom(TLReadBuffer reader)
         {
-            return new OutMsgQueueSizes
+            var result = new LiteServerOutMsgQueueSizes();
+            uint shardsCount = reader.ReadUInt32();
+            result.Shards = new LiteServerOutMsgQueueSize[shardsCount];
+            for (int i = 0; i < shardsCount; i++)
             {
-                Shards = Array.Empty<OutMsgQueueSize>(),
-                ExtMsgQueueSizeLimit = reader.ReadInt32(),
-            };
+                result.Shards[i] = LiteServerOutMsgQueueSize.ReadFrom(reader);
+            }
+            result.ExtMsgQueueSizeLimit = reader.ReadInt32();
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.blockOutMsgQueueSize = liteServer.BlockOutMsgQueueSize
     /// </summary>
-    public class BlockOutMsgQueueSize
+    public class LiteServerBlockOutMsgQueueSize
     {
         public const uint Constructor = 0xE9E602FB;
 
         public uint Mode { get; set; }
-        public BlockIdExt Id { get; set; }
+        public TonNodeBlockIdExt Id { get; set; }
         public long Size { get; set; }
         public byte[] Proof { get; set; } = Array.Empty<byte>();
 
@@ -1339,11 +1408,11 @@ namespace TonSdk.Adnl.LiteClient
             }
         }
 
-        public static BlockOutMsgQueueSize ReadFrom(TLReadBuffer reader)
+        public static LiteServerBlockOutMsgQueueSize ReadFrom(TLReadBuffer reader)
         {
-            var result = new BlockOutMsgQueueSize();
+            var result = new LiteServerBlockOutMsgQueueSize();
             result.Mode = reader.ReadUInt32();
-            result.Id = BlockIdExt.ReadFrom(reader);
+            result.Id = TonNodeBlockIdExt.ReadFrom(reader);
             result.Size = reader.ReadInt64();
             if ((result.Mode & (1u << 0)) != 0)
                 result.Proof = reader.ReadBuffer();
@@ -1354,7 +1423,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.accountDispatchQueueInfo = liteServer.AccountDispatchQueueInfo
     /// </summary>
-    public class AccountDispatchQueueInfo
+    public class LiteServerAccountDispatchQueueInfo
     {
         public const uint Constructor = 0x3F213E07;
 
@@ -1371,9 +1440,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt64(MaxLt);
         }
 
-        public static AccountDispatchQueueInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerAccountDispatchQueueInfo ReadFrom(TLReadBuffer reader)
         {
-            return new AccountDispatchQueueInfo
+            return new LiteServerAccountDispatchQueueInfo
             {
                 Addr = reader.ReadBuffer(),
                 Size = reader.ReadInt64(),
@@ -1386,13 +1455,13 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.dispatchQueueInfo = liteServer.DispatchQueueInfo
     /// </summary>
-    public class DispatchQueueInfo
+    public class LiteServerDispatchQueueInfo
     {
         public const uint Constructor = 0x569404CB;
 
         public uint Mode { get; set; }
-        public BlockIdExt Id { get; set; }
-        public AccountDispatchQueueInfo[] AccountDispatchQueues { get; set; } = Array.Empty<AccountDispatchQueueInfo>();
+        public TonNodeBlockIdExt Id { get; set; }
+        public LiteServerAccountDispatchQueueInfo[] AccountDispatchQueues { get; set; } = Array.Empty<LiteServerAccountDispatchQueueInfo>();
         public bool Complete { get; set; }
         public byte[] Proof { get; set; } = Array.Empty<byte>();
 
@@ -1400,7 +1469,11 @@ namespace TonSdk.Adnl.LiteClient
         {
             writer.WriteUInt32(Mode);
             Id.WriteTo(writer);
-            // TODO: Write array AccountDispatchQueues
+            writer.WriteUInt32((uint)AccountDispatchQueues.Length);
+                foreach (var item in AccountDispatchQueues)
+                {
+                    item.WriteTo(writer);
+                }
             writer.WriteBool(Complete);
             if ((Mode & (1u << 0)) != 0)
             {
@@ -1408,12 +1481,12 @@ namespace TonSdk.Adnl.LiteClient
             }
         }
 
-        public static DispatchQueueInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerDispatchQueueInfo ReadFrom(TLReadBuffer reader)
         {
-            var result = new DispatchQueueInfo();
+            var result = new LiteServerDispatchQueueInfo();
             result.Mode = reader.ReadUInt32();
-            result.Id = BlockIdExt.ReadFrom(reader);
-            result.AccountDispatchQueues = Array.Empty<AccountDispatchQueueInfo>();
+            result.Id = TonNodeBlockIdExt.ReadFrom(reader);
+            result.AccountDispatchQueues = Array.Empty<LiteServerAccountDispatchQueueInfo>();
             result.Complete = reader.ReadBool();
             if ((result.Mode & (1u << 0)) != 0)
                 result.Proof = reader.ReadBuffer();
@@ -1424,14 +1497,14 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.dispatchQueueMessage = liteServer.DispatchQueueMessage
     /// </summary>
-    public class DispatchQueueMessage
+    public class LiteServerDispatchQueueMessage
     {
         public const uint Constructor = 0x2352C9EC;
 
         public byte[] Addr { get; set; } = Array.Empty<byte>();
         public long Lt { get; set; }
         public byte[] Hash { get; set; } = Array.Empty<byte>();
-        public TransactionMetadata Metadata { get; set; }
+        public LiteServerTransactionMetadata Metadata { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
@@ -1441,14 +1514,14 @@ namespace TonSdk.Adnl.LiteClient
             Metadata.WriteTo(writer);
         }
 
-        public static DispatchQueueMessage ReadFrom(TLReadBuffer reader)
+        public static LiteServerDispatchQueueMessage ReadFrom(TLReadBuffer reader)
         {
-            return new DispatchQueueMessage
+            return new LiteServerDispatchQueueMessage
             {
                 Addr = reader.ReadBuffer(),
                 Lt = reader.ReadInt64(),
                 Hash = reader.ReadInt256(),
-                Metadata = TransactionMetadata.ReadFrom(reader),
+                Metadata = LiteServerTransactionMetadata.ReadFrom(reader),
             };
         }
     }
@@ -1456,7 +1529,7 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.debug.verbosity = liteServer.debug.Verbosity
     /// </summary>
-    public class DebugVerbosity
+    public class LiteServerDebugVerbosity
     {
         public const uint Constructor = 0xDC8427F8;
 
@@ -1467,9 +1540,9 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt32(Value);
         }
 
-        public static DebugVerbosity ReadFrom(TLReadBuffer reader)
+        public static LiteServerDebugVerbosity ReadFrom(TLReadBuffer reader)
         {
-            return new DebugVerbosity
+            return new LiteServerDebugVerbosity
             {
                 Value = reader.ReadInt32(),
             };
@@ -1479,11 +1552,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.nonfinal.candidateId = liteServer.nonfinal.CandidateId
     /// </summary>
-    public class NonfinalCandidateId
+    public class LiteServerNonfinalCandidateId
     {
         public const uint Constructor = 0x24EECDA9;
 
-        public BlockIdExt BlockId { get; set; }
+        public TonNodeBlockIdExt BlockId { get; set; }
         public byte[] Creator { get; set; } = Array.Empty<byte>();
         public byte[] CollatedDataHash { get; set; } = Array.Empty<byte>();
 
@@ -1494,11 +1567,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBytes(CollatedDataHash, 32);
         }
 
-        public static NonfinalCandidateId ReadFrom(TLReadBuffer reader)
+        public static LiteServerNonfinalCandidateId ReadFrom(TLReadBuffer reader)
         {
-            return new NonfinalCandidateId
+            return new LiteServerNonfinalCandidateId
             {
-                BlockId = BlockIdExt.ReadFrom(reader),
+                BlockId = TonNodeBlockIdExt.ReadFrom(reader),
                 Creator = reader.ReadBuffer(),
                 CollatedDataHash = reader.ReadInt256(),
             };
@@ -1508,11 +1581,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.nonfinal.candidate = liteServer.nonfinal.Candidate
     /// </summary>
-    public class NonfinalCandidate
+    public class LiteServerNonfinalCandidate
     {
         public const uint Constructor = 0x87870AE4;
 
-        public NonfinalCandidateId Id { get; set; }
+        public LiteServerNonfinalCandidateId Id { get; set; }
         public byte[] Data { get; set; } = Array.Empty<byte>();
         public byte[] CollatedData { get; set; } = Array.Empty<byte>();
 
@@ -1523,11 +1596,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBuffer(CollatedData);
         }
 
-        public static NonfinalCandidate ReadFrom(TLReadBuffer reader)
+        public static LiteServerNonfinalCandidate ReadFrom(TLReadBuffer reader)
         {
-            return new NonfinalCandidate
+            return new LiteServerNonfinalCandidate
             {
-                Id = NonfinalCandidateId.ReadFrom(reader),
+                Id = LiteServerNonfinalCandidateId.ReadFrom(reader),
                 Data = reader.ReadBuffer(),
                 CollatedData = reader.ReadBuffer(),
             };
@@ -1537,11 +1610,11 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.nonfinal.candidateInfo = liteServer.nonfinal.CandidateInfo
     /// </summary>
-    public class NonfinalCandidateInfo
+    public class LiteServerNonfinalCandidateInfo
     {
         public const uint Constructor = 0x95FDCCF3;
 
-        public NonfinalCandidateId Id { get; set; }
+        public LiteServerNonfinalCandidateId Id { get; set; }
         public bool Available { get; set; }
         public long ApprovedWeight { get; set; }
         public long SignedWeight { get; set; }
@@ -1556,11 +1629,11 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteInt64(TotalWeight);
         }
 
-        public static NonfinalCandidateInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerNonfinalCandidateInfo ReadFrom(TLReadBuffer reader)
         {
-            return new NonfinalCandidateInfo
+            return new LiteServerNonfinalCandidateInfo
             {
-                Id = NonfinalCandidateId.ReadFrom(reader),
+                Id = LiteServerNonfinalCandidateId.ReadFrom(reader),
                 Available = reader.ReadBool(),
                 ApprovedWeight = reader.ReadInt64(),
                 SignedWeight = reader.ReadInt64(),
@@ -1572,55 +1645,80 @@ namespace TonSdk.Adnl.LiteClient
     /// <summary>
     /// liteServer.nonfinal.validatorGroupInfo = liteServer.nonfinal.ValidatorGroupInfo
     /// </summary>
-    public class NonfinalValidatorGroupInfo
+    public class LiteServerNonfinalValidatorGroupInfo
     {
         public const uint Constructor = 0x928BCA39;
 
-        public BlockId NextBlockId { get; set; }
+        public TonNodeBlockId NextBlockId { get; set; }
         public int CcSeqno { get; set; }
-        public BlockIdExt[] Prev { get; set; } = Array.Empty<BlockIdExt>();
-        public NonfinalCandidateInfo[] Candidates { get; set; } = Array.Empty<NonfinalCandidateInfo>();
+        public TonNodeBlockIdExt[] Prev { get; set; } = Array.Empty<TonNodeBlockIdExt>();
+        public LiteServerNonfinalCandidateInfo[] Candidates { get; set; } = Array.Empty<LiteServerNonfinalCandidateInfo>();
 
         public  void WriteTo(TLWriteBuffer writer)
         {
             NextBlockId.WriteTo(writer);
             writer.WriteInt32(CcSeqno);
-            // TODO: Write array Prev
-            // TODO: Write array Candidates
+            writer.WriteUInt32((uint)Prev.Length);
+                foreach (var item in Prev)
+                {
+                    item.WriteTo(writer);
+                }
+            writer.WriteUInt32((uint)Candidates.Length);
+                foreach (var item in Candidates)
+                {
+                    item.WriteTo(writer);
+                }
         }
 
-        public static NonfinalValidatorGroupInfo ReadFrom(TLReadBuffer reader)
+        public static LiteServerNonfinalValidatorGroupInfo ReadFrom(TLReadBuffer reader)
         {
-            return new NonfinalValidatorGroupInfo
+            var result = new LiteServerNonfinalValidatorGroupInfo();
+            result.NextBlockId = TonNodeBlockId.ReadFrom(reader);
+            result.CcSeqno = reader.ReadInt32();
+            uint prevCount = reader.ReadUInt32();
+            result.Prev = new TonNodeBlockIdExt[prevCount];
+            for (int i = 0; i < prevCount; i++)
             {
-                NextBlockId = BlockId.ReadFrom(reader),
-                CcSeqno = reader.ReadInt32(),
-                Prev = Array.Empty<BlockIdExt>(),
-                Candidates = Array.Empty<NonfinalCandidateInfo>(),
-            };
+                result.Prev[i] = TonNodeBlockIdExt.ReadFrom(reader);
+            }
+            uint candidatesCount = reader.ReadUInt32();
+            result.Candidates = new LiteServerNonfinalCandidateInfo[candidatesCount];
+            for (int i = 0; i < candidatesCount; i++)
+            {
+                result.Candidates[i] = LiteServerNonfinalCandidateInfo.ReadFrom(reader);
+            }
+            return result;
         }
     }
 
     /// <summary>
     /// liteServer.nonfinal.validatorGroups = liteServer.nonfinal.ValidatorGroups
     /// </summary>
-    public class NonfinalValidatorGroups
+    public class LiteServerNonfinalValidatorGroups
     {
         public const uint Constructor = 0xF982422F;
 
-        public NonfinalValidatorGroupInfo[] Groups { get; set; } = Array.Empty<NonfinalValidatorGroupInfo>();
+        public LiteServerNonfinalValidatorGroupInfo[] Groups { get; set; } = Array.Empty<LiteServerNonfinalValidatorGroupInfo>();
 
         public  void WriteTo(TLWriteBuffer writer)
         {
-            // TODO: Write array Groups
+            writer.WriteUInt32((uint)Groups.Length);
+                foreach (var item in Groups)
+                {
+                    item.WriteTo(writer);
+                }
         }
 
-        public static NonfinalValidatorGroups ReadFrom(TLReadBuffer reader)
+        public static LiteServerNonfinalValidatorGroups ReadFrom(TLReadBuffer reader)
         {
-            return new NonfinalValidatorGroups
+            var result = new LiteServerNonfinalValidatorGroups();
+            uint groupsCount = reader.ReadUInt32();
+            result.Groups = new LiteServerNonfinalValidatorGroupInfo[groupsCount];
+            for (int i = 0; i < groupsCount; i++)
             {
-                Groups = Array.Empty<NonfinalValidatorGroupInfo>(),
-            };
+                result.Groups[i] = LiteServerNonfinalValidatorGroupInfo.ReadFrom(reader);
+            }
+            return result;
         }
     }
 

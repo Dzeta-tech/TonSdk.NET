@@ -32,14 +32,9 @@ def compute_crc32(text: str) -> int:
     return zlib.crc32(text.encode('utf-8')) & 0xFFFFFFFF
 
 def parse_type(type_str: str, field_name: str = '') -> Tuple[str, bool]:
-    """Parse TL type string to C# type"""
-    is_optional = type_str.startswith('?')
+    """Parse TL type string to C# type (non-nullable, protocol layer uses default values)"""
+    # Strip optional marker but ignore it - we use default values for conditional fields
     type_str = type_str.lstrip('?').strip()
-    
-    # Check if this int256 represents an address
-    address_field_names = {'account', 'address', 'account_addr'}
-    if type_str == 'int256' and field_name.lower() in address_field_names:
-        return 'Address', is_optional
     
     type_map = {
         'int': 'int',
@@ -49,7 +44,7 @@ def parse_type(type_str: str, field_name: str = '') -> Tuple[str, bool]:
         'bytes': 'byte[]',
         'Bool': 'bool',
         'true': 'bool',
-        'int256': 'byte[]',  # 32 bytes (unless it's an address)
+        'int256': 'byte[]',  # 32 bytes
         'int128': 'byte[]',  # 16 bytes
         '#': 'uint',
     }
@@ -59,15 +54,15 @@ def parse_type(type_str: str, field_name: str = '') -> Tuple[str, bool]:
     if vector_match:
         inner_type_str = vector_match.group(1).strip()
         inner_type, _ = parse_type(inner_type_str, field_name)
-        return f'{inner_type}[]', is_optional
+        return f'{inner_type}[]', False  # Never optional
     
     # Handle custom types (convert to PascalCase)
     if '.' in type_str:
-        return to_pascal_case(type_str), is_optional
+        return to_pascal_case(type_str), False  # Never optional
     
     # Handle result types (these might be union types)
     cs_type = type_map.get(type_str, to_pascal_case(type_str))
-    return cs_type, is_optional
+    return cs_type, False  # Never optional
 
 def parse_field(field_str: str) -> Optional[TLField]:
     """Parse a single TL field"""
@@ -164,39 +159,17 @@ def parse_tl_line(line: str, is_function: bool = False) -> Optional[TLType]:
     )
 
 def to_pascal_case(name: str) -> str:
-    """Convert snake_case or lowerCamelCase to PascalCase"""
-    # Types that should keep their LiteServer prefix to avoid conflicts
-    keep_prefix_types = {'liteserver.version', 'liteserver.signature', 'liteserver.signatureset'}
-    
-    # Handle dots (e.g., liteServer.error -> Error, tonNode.blockId -> BlockId)
+    """Convert snake_case or lowerCamelCase to PascalCase, keeping full namespace prefixes"""
+    # Handle dots - keep full namespace structure in PascalCase
+    # e.g., liteServer.error -> LiteServerError, tonNode.blockId -> TonNodeBlockId
     if '.' in name:
         parts = name.split('.')
-        # For tonNode and liteServer, strip only the first part (prefix)
-        # but keep any nested parts like liteServer.nonfinal.candidate -> NonfinalCandidate
-        if parts[0] in ('tonNode', 'liteServer'):
-            # Check if we should keep the prefix
-            if name.lower() in keep_prefix_types:
-                # Keep the liteServer prefix
-                result_parts = []
-                for part in parts:
-                    words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
-                    result_parts.extend(words)
-                return ''.join(w.capitalize() for w in result_parts)
-            else:
-                parts = parts[1:]  # Remove prefix
-                # Now join the remaining parts
-                result_parts = []
-                for part in parts:
-                    words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
-                    result_parts.extend(words)
-                return ''.join(w.capitalize() for w in result_parts)
-        else:
-            # For other prefixes, capitalize each part
-            result_parts = []
-            for part in parts:
-                words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
-                result_parts.extend(words)
-            return ''.join(w.capitalize() for w in result_parts)
+        result_parts = []
+        for part in parts:
+            # Split each part by camelCase and underscores
+            words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
+            result_parts.extend(words)
+        return ''.join(w.capitalize() for w in result_parts)
     
     # Handle underscores first (snake_case)
     if '_' in name or '-' in name:
@@ -223,14 +196,11 @@ def to_camel_case(name: str) -> str:
     return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
 
 def generate_field_declaration(field: TLField) -> str:
-    """Generate C# field declaration"""
+    """Generate C# field declaration (non-nullable, with default values)"""
     cs_type = field.type
-    if field.is_optional and not cs_type.endswith('?') and cs_type not in ['string', 'byte[]'] and not cs_type.endswith('[]'):
-        cs_type = f'{cs_type}?'
-    
     prop_name = to_pascal_case(field.name)
     
-    # Handle special cases for default values
+    # Provide default values for all types (no nullable)
     if cs_type == 'byte[]':
         return f"public {cs_type} {prop_name} {{ get; set; }} = Array.Empty<byte>();"
     elif cs_type.endswith('[]') and not cs_type.startswith('byte'):
@@ -238,7 +208,12 @@ def generate_field_declaration(field: TLField) -> str:
         return f"public {cs_type} {prop_name} {{ get; set; }} = Array.Empty<{inner}>();"
     elif cs_type == 'string':
         return f'public {cs_type} {prop_name} {{ get; set; }} = string.Empty;'
+    elif cs_type in ['int', 'uint', 'long', 'double']:
+        return f'public {cs_type} {prop_name} {{ get; set; }}'  # Value types default to 0
+    elif cs_type == 'bool':
+        return f'public {cs_type} {prop_name} {{ get; set; }}'  # Defaults to false
     else:
+        # Custom types (classes) - nullable disable means they can be null
         return f'public {cs_type} {prop_name} {{ get; set; }}'
 
 def generate_struct_or_class(tl_type: TLType, is_struct: bool = False, union_types: dict = None) -> str:
@@ -360,13 +335,34 @@ def generate_struct_or_class(tl_type: TLType, is_struct: bool = False, union_typ
                         lines.append(f'        result.{prop_name} = {read_method};')
                 lines.append('        return result;')
             else:
-                lines.append(f'        return new {class_name}')
-                lines.append('        {')
-                for field in tl_type.fields:
-                    prop_name = to_pascal_case(field.name)
-                    read_method = get_read_method(field.type, field.name)
-                    lines.append(f'            {prop_name} = {read_method},')
-                lines.append('        };')
+                # Check if we have any array fields that need special handling
+                has_arrays = any(f.type.endswith('[]') and f.type != 'byte[]' for f in tl_type.fields)
+                
+                if has_arrays:
+                    # Generate imperative style for better array reading
+                    lines.append(f'        var result = new {class_name}();')
+                    for field in tl_type.fields:
+                        prop_name = to_pascal_case(field.name)
+                        if field.type.endswith('[]') and field.type != 'byte[]':
+                            element_type = field.type[:-2]
+                            lines.append(f'        uint {prop_name.lower()}Count = reader.ReadUInt32();')
+                            lines.append(f'        result.{prop_name} = new {element_type}[{prop_name.lower()}Count];')
+                            lines.append(f'        for (int i = 0; i < {prop_name.lower()}Count; i++)')
+                            lines.append(f'        {{')
+                            lines.append(f'            result.{prop_name}[i] = {element_type}.ReadFrom(reader);')
+                            lines.append(f'        }}')
+                        else:
+                            read_method = get_read_method(field.type, field.name)
+                            lines.append(f'        result.{prop_name} = {read_method};')
+                    lines.append('        return result;')
+                else:
+                    lines.append(f'        return new {class_name}')
+                    lines.append('        {')
+                    for field in tl_type.fields:
+                        prop_name = to_pascal_case(field.name)
+                        read_method = get_read_method(field.type, field.name)
+                        lines.append(f'            {prop_name} = {read_method},')
+                    lines.append('        };')
         lines.append('    }')
     
     lines.append('}')
@@ -374,12 +370,6 @@ def generate_struct_or_class(tl_type: TLType, is_struct: bool = False, union_typ
 
 def get_write_method(cs_type: str, prop_name: str, field_name: str = '') -> str:
     """Get the appropriate TLWriteBuffer.Write* method call"""
-    # Handle Address type
-    if cs_type == 'Address':
-        return f'writer.WriteBytes({prop_name}.Hash.ToArray(), 32);'
-    if cs_type == 'Address?':
-        return f'writer.WriteBytes({prop_name}.Value.Hash.ToArray(), 32);'
-    
     type_map = {
         'int': f'writer.WriteInt32({prop_name});',
         'uint': f'writer.WriteUInt32({prop_name});',
@@ -404,19 +394,26 @@ def get_write_method(cs_type: str, prop_name: str, field_name: str = '') -> str:
     if cs_type in type_map:
         return type_map[cs_type]
     
-    # Handle arrays
+    # Handle arrays (TL vectors)
     if cs_type.endswith('[]') and cs_type != 'byte[]':
-        return f'// TODO: Write array {prop_name}'
+        element_type = cs_type[:-2]
+        # Check if it's a primitive or custom type
+        if element_type in ['int', 'uint', 'long', 'bool', 'string']:
+            # TODO: Implement primitive array writing
+            return f'// TODO: Write primitive array {prop_name}'
+        else:
+            # Custom types - write vector length then each element
+            return f'''writer.WriteUInt32((uint){prop_name}.Length);
+            foreach (var item in {prop_name})
+            {{
+                item.WriteTo(writer);
+            }}'''
     
     # Handle custom types (they have WriteTo methods)
     return f'{prop_name}.WriteTo(writer);'
 
 def get_read_method(cs_type: str, field_name: str = '') -> str:
     """Get the appropriate TLReadBuffer.Read* method call"""
-    # Handle Address type (account hash only, workchain determined from context)
-    if cs_type == 'Address':
-        return 'new Address(0, reader.ReadInt256())'  # Default to workchain 0
-    
     type_map = {
         'int': 'reader.ReadInt32()',
         'uint': 'reader.ReadUInt32()',
@@ -442,9 +439,12 @@ def get_read_method(cs_type: str, field_name: str = '') -> str:
     if cs_type in type_map:
         return type_map[cs_type]
     
-    # Handle arrays
+    # Handle arrays (TL vectors)
     if cs_type.endswith('[]') and cs_type != 'byte[]':
-        return f'Array.Empty<{cs_type[:-2]}>()'  # TODO: Proper array reading
+        element_type = cs_type[:-2]
+        # For now, return empty array - proper reading needs to be in conditional ReadFrom
+        # This will be handled in the ReadFrom method generation
+        return f'Array.Empty<{element_type}>()'
     
     # Handle custom types
     return f'{cs_type}.ReadFrom(reader)'
@@ -489,34 +489,61 @@ def generate_csharp_code(types: List[TLType], functions: List[TLType]) -> str:
     lines = []
     lines.append('// Auto-generated from lite_api.tl')
     lines.append('// DO NOT EDIT MANUALLY')
+    lines.append('// This is the protocol layer - raw TL types matching lite_api.tl exactly')
+    lines.append('// For user-facing APIs, create domain models and map in LiteClient')
     if union_types:
         lines.append(f'// Union types: {", ".join(union_types.keys())}')
     lines.append('')
+    lines.append('#nullable disable')
+    lines.append('')
     lines.append('using System;')
     lines.append('using TonSdk.Adnl.TL;')
-    lines.append('using TonSdk.Core;')
     lines.append('')
     lines.append('namespace TonSdk.Adnl.LiteClient')
     lines.append('{')
     
     # Generate abstract base classes for union types
+    # Only generate if ALL implementations are actually being generated (tonNode.* or liteServer.*)
     if union_types:
-        lines.append('    // ============================================================================')
-        lines.append('    // Abstract base classes for union types')
-        lines.append('    // ============================================================================')
-        lines.append('')
+        relevant_union_types = {}
         for result_type, implementations in union_types.items():
-            abstract_class_name = to_pascal_case(result_type)
-            lines.append(f'    /// <summary>')
-            lines.append(f'    /// Base class for {result_type}')
-            lines.append(f'    /// Implementations: {", ".join(to_pascal_case(t.name) for t in implementations)}')
-            lines.append(f'    /// </summary>')
-            lines.append(f'    public abstract class {abstract_class_name}')
-            lines.append('    {')
-            lines.append('        public abstract uint Constructor { get; }')
-            lines.append('        public abstract void WriteTo(TLWriteBuffer writer);')
-            lines.append('    }')
+            # Check if all implementations are being generated
+            all_generated = all(t.name.startswith('tonNode.') or t.name.startswith('liteServer.') 
+                              for t in implementations)
+            if all_generated:
+                relevant_union_types[result_type] = implementations
+        
+        if relevant_union_types:
+            lines.append('    // ============================================================================')
+            lines.append('    // Abstract base classes for union types')
+            lines.append('    // ============================================================================')
             lines.append('')
+            for result_type, implementations in relevant_union_types.items():
+                abstract_class_name = to_pascal_case(result_type)
+                lines.append(f'    /// <summary>')
+                lines.append(f'    /// Base class for {result_type}')
+                lines.append(f'    /// Implementations: {", ".join(to_pascal_case(t.name) for t in implementations)}')
+                lines.append(f'    /// </summary>')
+                lines.append(f'    public abstract class {abstract_class_name}')
+                lines.append('    {')
+                lines.append('        public abstract uint Constructor { get; }')
+                lines.append('        public abstract void WriteTo(TLWriteBuffer writer);')
+                lines.append('')
+                lines.append('        public static ' + abstract_class_name + ' ReadFrom(TLReadBuffer reader)')
+                lines.append('        {')
+                lines.append('            uint constructor = reader.ReadUInt32();')
+                lines.append('            switch (constructor)')
+                lines.append('            {')
+                for impl in implementations:
+                    impl_class = to_pascal_case(impl.name)
+                    lines.append(f'                case 0x{impl.constructor:08X}:')
+                    lines.append(f'                    return {impl_class}.ReadFrom(reader);')
+                lines.append('                default:')
+                lines.append(f'                    throw new Exception($"Unknown constructor 0x{{constructor:X8}} for {result_type}");')
+                lines.append('            }')
+                lines.append('        }')
+                lines.append('    }')
+                lines.append('')
     
     # Generate basic types (as structs)
     basic_types = [t for t in types if t.name.startswith('tonNode.')]
