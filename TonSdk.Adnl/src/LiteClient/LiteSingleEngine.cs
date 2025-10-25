@@ -248,6 +248,19 @@ namespace TonSdk.Adnl.LiteClient
 
                 // Parse ADNL message
                 var buffer = new TL.TLReadBuffer(data);
+                
+                // Read TL answer prefix (4 bytes)
+                uint tlAnswer = buffer.ReadUInt32();
+                _logger.LogDebug("OnDataReceived: TL answer prefix={TLAnswer:X8}", tlAnswer);
+                
+                // Check if this is a pong response (tcp.pong = 0x0A9276D4)
+                if (tlAnswer == 0x0A9276D4)
+                {
+                    _logger.LogDebug("OnDataReceived: Received pong response, ignoring");
+                    return;
+                }
+                
+                // Read query ID (32 bytes)
                 byte[] queryId = buffer.ReadBytes(32);
                 string queryIdHex = Utils.BytesToHex(queryId);
 
@@ -255,9 +268,9 @@ namespace TonSdk.Adnl.LiteClient
 
                 if (_pendingQueries.TryRemove(queryIdHex, out var context))
                 {
-                    // Read remaining response data (entire remaining buffer)
-                    byte[] responseData = buffer.ReadObject();
-                    _logger.LogDebug("OnDataReceived: Matched query {QueryId}, responseSize={ResponseSize}bytes, completing task", 
+                    // Read TL-encoded response buffer (length-prefixed)
+                    byte[] responseData = buffer.ReadBuffer();
+                    _logger.LogDebug("OnDataReceived: Matched query {QueryId}, responseSize={ResponseSize}bytes, completing task",
                         queryIdHex, responseData.Length);
                     context.TaskCompletionSource.TrySetResult(responseData);
                 }
