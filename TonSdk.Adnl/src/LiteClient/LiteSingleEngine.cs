@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using TonSdk.Core;
+using TonSdk.Core.Crypto;
 
 namespace TonSdk.Adnl.LiteClient
 {
@@ -32,9 +33,9 @@ namespace TonSdk.Adnl.LiteClient
 
         class QueryContext
         {
-            public required TaskCompletionSource<byte[]> TaskCompletionSource { get; init; }
-            public required byte[] Packet { get; init; }
-            public required CancellationTokenRegistration CancellationRegistration { get; set; }
+            public TaskCompletionSource<byte[]> TaskCompletionSource { get; set; } = null!;
+            public byte[] Packet { get; set; } = null!;
+            public CancellationTokenRegistration CancellationRegistration { get; set; }
         }
 
         public LiteSingleEngine(string host, int port, byte[] publicKey, int reconnectTimeoutMs = 10000)

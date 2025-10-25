@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TonSdk.Core;
 using TonSdk.Core.Boc;
+using TonSdk.Core.Crypto;
 
 namespace TonSdk.Adnl.LiteClient
 {
