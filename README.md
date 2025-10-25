@@ -1,35 +1,42 @@
-# TonSdk.NET
+# Dzeta.TonSdk.NET
+
+> **Note**: This is a fork of [TonSdk.NET](https://github.com/continuation-team/TonSdk.NET) with critical bug fixes for thread-safety issues in the LiteClient. The original SDK had race conditions when multiple threads/processes accessed the lite client concurrently, leading to data corruption and "Index out of range" errors during BOC deserialization.
+>
+> **Key fixes**:
+> - Replaced `Dictionary` with `ConcurrentDictionary` for thread-safe request handling
+> - Added bounds checking in BOC deserialization for extra safety
+> - Uses proper atomic operations for request management
 
 ## Packages
 
-### [TonSdk.Core](https://www.nuget.org/packages/TonSdk.Core/)
-[![NuGet](https://img.shields.io/nuget/dt/TonSdk.Core.svg)](https://www.nuget.org/packages/TonSdk.Core)
-[![NuGet](https://img.shields.io/nuget/vpre/TonSdk.Core.svg)](https://www.nuget.org/packages/TonSdk.Core) \
+### [Dzeta.TonSdk.Core](https://www.nuget.org/packages/Dzeta.TonSdk.Core/)
+[![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Core.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Core)
+[![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Core.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Core) \
 Core library with types and structures for TON Blockchain
 
-### [TonSdk.Client](https://www.nuget.org/packages/TonSdk.Client/)
-[![NuGet](https://img.shields.io/nuget/dt/TonSdk.Client.svg)](https://www.nuget.org/packages/TonSdk.Client)
-[![NuGet](https://img.shields.io/nuget/vpre/TonSdk.Client.svg)](https://www.nuget.org/packages/TonSdk.Client) \
+### [Dzeta.TonSdk.Client](https://www.nuget.org/packages/Dzeta.TonSdk.Client/)
+[![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Client.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Client)
+[![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Client.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Client) \
 RPC Client for work with TonCenter API
 
-### [TonSdk.Contracts](https://www.nuget.org/packages/TonSdk.Contracts/)
-[![NuGet](https://img.shields.io/nuget/dt/TonSdk.Contracts.svg)](https://www.nuget.org/packages/TonSdk.Contracts)
-[![NuGet](https://img.shields.io/nuget/vpre/TonSdk.Contracts.svg)](https://www.nuget.org/packages/TonSdk.Contracts) \
+### [Dzeta.TonSdk.Contracts](https://www.nuget.org/packages/Dzeta.TonSdk.Contracts/)
+[![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Contracts.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Contracts)
+[![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Contracts.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Contracts) \
 Abstractions for work with smart contracts in TON Blockchain
 
-### [TonSdk.Connect](https://www.nuget.org/packages/TonSdk.Connect/)
-[![NuGet](https://img.shields.io/nuget/dt/TonSdk.Connect.svg)](https://www.nuget.org/packages/TonSdk.Connect)
-[![NuGet](https://img.shields.io/nuget/vpre/TonSdk.Connect.svg)](https://www.nuget.org/packages/TonSdk.Connect) \
+### [Dzeta.TonSdk.Connect](https://www.nuget.org/packages/Dzeta.TonSdk.Connect/)
+[![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Connect.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Connect)
+[![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Connect.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Connect) \
 Library to work with Ton Connect 2.0
 
-### [TonSdk.Adnl](https://www.nuget.org/packages/TonSdk.Adnl/)
-[![NuGet](https://img.shields.io/nuget/dt/TonSdk.Adnl.svg)](https://www.nuget.org/packages/TonSdk.Adnl)
-[![NuGet](https://img.shields.io/nuget/vpre/TonSdk.Adnl.svg)](https://www.nuget.org/packages/TonSdk.Adnl) \
+### [Dzeta.TonSdk.Adnl](https://www.nuget.org/packages/Dzeta.TonSdk.Adnl/)
+[![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Adnl.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Adnl)
+[![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Adnl.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Adnl) \
 Library to work with Ton ADNL
 
-### [TonSdk.DeFi](https://www.nuget.org/packages/TonSdk.DeFi/)
-[![NuGet](https://img.shields.io/nuget/dt/TonSdk.Defi.svg)](https://www.nuget.org/packages/TonSdk.DeFi)
-[![NuGet](https://img.shields.io/nuget/vpre/TonSdk.DeFi.svg)](https://www.nuget.org/packages/TonSdk.DeFi) \
+### [Dzeta.TonSdk.DeFi](https://www.nuget.org/packages/Dzeta.TonSdk.DeFi/)
+[![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Defi.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.DeFi)
+[![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.DeFi.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.DeFi) \
 Library to work with Ton DeFi`s
 
 ## Features and status

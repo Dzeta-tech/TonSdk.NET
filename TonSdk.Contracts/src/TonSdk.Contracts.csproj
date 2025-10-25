@@ -5,16 +5,16 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <LangVersion>8.0</LangVersion>
         <RootNamespace>TonSdk.Contracts</RootNamespace>
-        <PackageId>TonSdk.Contracts</PackageId>
-        <Version>0.4.0</Version>
-        <Authors>Continuation Team</Authors>
-        <PackageDescription>Abstractions for work with smart contracts in TON Blockchain</PackageDescription>
-        <RepositoryUrl>https://github.com/continuation-team/TonSdk.NET</RepositoryUrl>
+        <PackageId>Dzeta.TonSdk.Contracts</PackageId>
+        <Version>0.4.1</Version>
+        <Authors>Dzeta Tech</Authors>
+        <PackageDescription>Abstractions for work with smart contracts in TON Blockchain (Thread-safe fork)</PackageDescription>
+        <RepositoryUrl>https://github.com/Dzeta-tech/TonSdk.NET</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="TonSdk.Core" Version="0.3.1" />
+        <PackageReference Include="Dzeta.TonSdk.Core" Version="0.3.10" />
     </ItemGroup>
 
     <PropertyGroup>

@@ -167,6 +167,10 @@ namespace TonSdk.Core.Boc {
 
             for (var i = (int)(headers.CellsNum - 1); i >= 0; i--) {
                 foreach (var refIndex in rawCells[i].Refs) {
+                    if (refIndex >= (ulong)rawCells.Length) {
+                        throw new Exception($"BOC deserialization error: Reference index {refIndex} is out of bounds (total cells: {rawCells.Length})");
+                    }
+                    
                     var rawRefCell = rawCells[refIndex];
                     if (refIndex < (ulong)i) {
                         throw new Exception("Topological order is broken");

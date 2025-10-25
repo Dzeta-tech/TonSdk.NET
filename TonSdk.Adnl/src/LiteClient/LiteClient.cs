@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
@@ -14,7 +15,7 @@ namespace TonSdk.Adnl.LiteClient
 {
     public class LiteClient
     {
-        private Dictionary<string, TaskCompletionSource<TLReadBuffer>> _pendingRequests;
+        private ConcurrentDictionary<string, TaskCompletionSource<TLReadBuffer>> _pendingRequests;
         private AdnlClientTcp _adnlClient;
         
         public LiteClient(int host, int port, byte[] peerPublicKey)
@@ -44,7 +45,7 @@ namespace TonSdk.Adnl.LiteClient
         public async Task Connect(CancellationToken cancellationToken = default)
         {
             if(_adnlClient.State == AdnlClientState.Open) return;
-            _pendingRequests = new Dictionary<string, TaskCompletionSource<TLReadBuffer>>();
+            _pendingRequests = new ConcurrentDictionary<string, TaskCompletionSource<TLReadBuffer>>();
             await _adnlClient.Connect();
             while (_adnlClient.State != AdnlClientState.Open)
             {
@@ -56,7 +57,7 @@ namespace TonSdk.Adnl.LiteClient
         public void Disconnect()
         {
             if(_adnlClient.State != AdnlClientState.Open) return;
-            _pendingRequests = new Dictionary<string, TaskCompletionSource<TLReadBuffer>>();
+            _pendingRequests = new ConcurrentDictionary<string, TaskCompletionSource<TLReadBuffer>>();
             _adnlClient.End();
         }
 
@@ -492,20 +493,21 @@ namespace TonSdk.Adnl.LiteClient
                 int code = liteQueryBuffer.ReadInt32();
                 string message = liteQueryBuffer.ReadString();
                 Console.WriteLine("Error: " + message + ". Code: " + code);
-                _pendingRequests[queryId].SetResult(null);
-                _pendingRequests.Remove(queryId);
+                if (_pendingRequests.TryRemove(queryId, out var errorTcs))
+                {
+                    errorTcs.SetResult(null);
+                }
                 return;
             }
             
             
-            if (!_pendingRequests.ContainsKey(queryId))
+            if (!_pendingRequests.TryRemove(queryId, out var tcs))
             {
                 await Console.Out.WriteLineAsync("Response id doesn't match any request's id"); 
                 return;
             }
             
-            _pendingRequests[queryId].SetResult(liteQueryBuffer);
-            _pendingRequests.Remove(queryId);
+            tcs.SetResult(liteQueryBuffer);
         }
         
     }
