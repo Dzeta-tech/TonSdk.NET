@@ -43,6 +43,7 @@ namespace TonSdk.Adnl
     {
         readonly Aes _aes;
         readonly AesCounter _counter;
+        readonly object _lock = new object(); // Lock for thread-safe encryption
         byte[] _remainingCounter;
         int _remainingCounterIndex;
 
@@ -60,21 +61,25 @@ namespace TonSdk.Adnl
 
         public byte[] Encrypt(byte[] plaintext)
         {
-            byte[] encrypted = new byte[plaintext.Length];
-
-            for (int i = 0; i < encrypted.Length; i++)
+            // Thread-safe encryption: lock to prevent concurrent modification of counter state
+            lock (_lock)
             {
-                if (_remainingCounterIndex == 16)
+                byte[] encrypted = new byte[plaintext.Length];
+
+                for (int i = 0; i < encrypted.Length; i++)
                 {
-                    _remainingCounter = EncryptCounter(_counter.Counter);
-                    _remainingCounterIndex = 0;
-                    _counter.Increment();
+                    if (_remainingCounterIndex == 16)
+                    {
+                        _remainingCounter = EncryptCounter(_counter.Counter);
+                        _remainingCounterIndex = 0;
+                        _counter.Increment();
+                    }
+
+                    encrypted[i] = (byte)(plaintext[i] ^ _remainingCounter[_remainingCounterIndex++]);
                 }
 
-                encrypted[i] = (byte)(plaintext[i] ^ _remainingCounter[_remainingCounterIndex++]);
+                return encrypted;
             }
-
-            return encrypted;
         }
 
         byte[] EncryptCounter(byte[] counter)
@@ -85,7 +90,7 @@ namespace TonSdk.Adnl
 
         public byte[] Decrypt(byte[] ciphertext)
         {
-            return Encrypt(ciphertext);
+            return Encrypt(ciphertext); // Delegates to Encrypt, which is now thread-safe
         }
     }
 }
