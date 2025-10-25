@@ -3,7 +3,7 @@ using System.Numerics;
 using TonSdk.Adnl.TL;
 using TonSdk.Core;
 
-namespace TonSdk.Adnl.LiteClient
+namespace TonSdk.Adnl.LiteClient.Protocol
 {
     /// <summary>
     /// Encodes requests for the lite server protocol

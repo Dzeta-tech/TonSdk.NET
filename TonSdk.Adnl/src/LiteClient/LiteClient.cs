@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TonSdk.Adnl.LiteClient.Engines;
+using TonSdk.Adnl.LiteClient.Protocol;
 using TonSdk.Core;
 using TonSdk.Core.Crypto;
 

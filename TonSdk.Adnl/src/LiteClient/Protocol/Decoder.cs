@@ -1,6 +1,6 @@
 using TonSdk.Adnl.TL;
 
-namespace TonSdk.Adnl.LiteClient
+namespace TonSdk.Adnl.LiteClient.Protocol
 {
     /// <summary>
     /// Decodes responses from the lite server protocol

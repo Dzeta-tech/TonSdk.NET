@@ -9,7 +9,7 @@
 using System;
 using TonSdk.Adnl.TL;
 
-namespace TonSdk.Adnl.LiteClient
+namespace TonSdk.Adnl.LiteClient.Protocol
 {
     // ============================================================================
     // Abstract base classes for union types

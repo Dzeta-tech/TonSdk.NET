@@ -4,10 +4,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using TonSdk.Adnl.LiteClient.Protocol;
+using TonSdk.Adnl.TL;
 using TonSdk.Core;
 using TonSdk.Core.Crypto;
 
-namespace TonSdk.Adnl.LiteClient
+namespace TonSdk.Adnl.LiteClient.Engines
 {
     /// <summary>
     /// Single connection lite engine.
@@ -280,9 +282,9 @@ namespace TonSdk.Adnl.LiteClient
                     _logger.LogDebug("OnDataReceived: Response code={ResponseCode:X8}", responseCode);
                     
                     // Check for liteServer.error
-                    if (responseCode == TonSdk.Adnl.LiteClient.LiteServerError.Constructor)
+                    if (responseCode == LiteServerError.Constructor)
                     {
-                        var error = TonSdk.Adnl.LiteClient.LiteServerError.ReadFrom(liteBuffer);
+                        var error = LiteServerError.ReadFrom(liteBuffer);
                         var ex = new Exception($"LiteServer error {error.Code}: {error.Message}");
                         _logger.LogError(ex, "OnDataReceived: LiteServer returned error for query {QueryId}", queryIdHex);
                         context.TaskCompletionSource.TrySetException(ex);

@@ -499,7 +499,7 @@ def generate_csharp_code(types: List[TLType], functions: List[TLType]) -> str:
     lines.append('using System;')
     lines.append('using TonSdk.Adnl.TL;')
     lines.append('')
-    lines.append('namespace TonSdk.Adnl.LiteClient')
+    lines.append('namespace TonSdk.Adnl.LiteClient.Protocol')
     lines.append('{')
     
     # Generate abstract base classes for union types
@@ -598,7 +598,7 @@ def main():
     print("Generating C# code...")
     csharp_code = generate_csharp_code(types, functions)
     
-    output_path = "../TonSdk.Adnl/src/LiteClient/Schema.Generated.cs"
+    output_path = "../TonSdk.Adnl/src/LiteClient/Protocol/Schema.Generated.cs"
     print(f"Writing to {output_path}...")
     with open(output_path, 'w') as f:
         f.write(csharp_code)
