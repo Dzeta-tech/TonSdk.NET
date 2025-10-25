@@ -5,16 +5,16 @@ namespace TonSdk.Adnl.Tests;
 
 public class AdnlTest
 {
-    readonly string AdnlHost = "5.9.10.47";
-    readonly int AdnlPort = 19949;
-    readonly string AdnlPubKey = "n4VDnSCUuSpjnCyUk9e3QOOd6o0ItSWYbTnW3Wnn8wk=";
+    readonly string adnlHost = "5.9.10.47";
+    readonly int adnlPort = 19949;
+    readonly string adnlPubKey = "n4VDnSCUuSpjnCyUk9e3QOOd6o0ItSWYbTnW3Wnn8wk=";
 
     AdnlClientTcp client;
 
     [SetUp]
     public void SetUpTest()
     {
-        client = new AdnlClientTcp(AdnlHost, AdnlPort, AdnlPubKey);
+        client = new AdnlClientTcp(adnlHost, adnlPort, adnlPubKey);
     }
 
     [Test]

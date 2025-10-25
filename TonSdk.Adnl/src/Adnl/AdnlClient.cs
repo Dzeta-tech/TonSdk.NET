@@ -3,233 +3,232 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace TonSdk.Adnl
+namespace TonSdk.Adnl;
+
+public enum AdnlClientState
 {
-    public enum AdnlClientState
+    Connecting,
+    Open,
+    Closing,
+    Closed
+}
+
+public class AdnlClientTcp
+{
+    readonly AdnlAddress address;
+    readonly string host;
+    readonly int port;
+    readonly TcpClient socket;
+
+    // private List<byte> _buffer;
+    byte[] buffer;
+    Cipher cipher;
+    Decipher decipher;
+    AdnlKeys keys;
+    NetworkStream networkStream;
+    AdnlAesParams @params;
+
+    public AdnlClientTcp(int host, int port, byte[] peerPublicKey)
     {
-        Connecting,
-        Open,
-        Closing,
-        Closed
+        this.host = ConvertToIpAddress(host);
+        this.port = port;
+        address = new AdnlAddress(peerPublicKey);
+        socket = new TcpClient();
+        socket.ReceiveBufferSize = 1 * 1024 * 1024;
+        socket.SendBufferSize = 1 * 1024 * 1024;
     }
 
-    public class AdnlClientTcp
+    public AdnlClientTcp(int host, int port, string peerPublicKey)
     {
-        readonly AdnlAddress _address;
-        readonly string _host;
-        readonly int _port;
-        readonly TcpClient _socket;
+        this.host = ConvertToIpAddress(host);
+        this.port = port;
+        address = new AdnlAddress(peerPublicKey);
+        socket = new TcpClient();
+        socket.ReceiveBufferSize = 1 * 1024 * 1024;
+        socket.SendBufferSize = 1 * 1024 * 1024;
+    }
 
-        // private List<byte> _buffer;
-        byte[] _buffer;
-        Cipher _cipher;
-        Decipher _decipher;
-        AdnlKeys _keys;
-        NetworkStream _networkStream;
-        AdnlAesParams _params;
+    public AdnlClientTcp(string host, int port, byte[] peerPublicKey)
+    {
+        this.host = host;
+        this.port = port;
+        address = new AdnlAddress(peerPublicKey);
+        socket = new TcpClient();
+        socket.ReceiveBufferSize = 1 * 1024 * 1024;
+        socket.SendBufferSize = 1 * 1024 * 1024;
+    }
 
-        public AdnlClientTcp(int host, int port, byte[] peerPublicKey)
+    public AdnlClientTcp(string host, int port, string peerPublicKey)
+    {
+        this.host = host;
+        this.port = port;
+        address = new AdnlAddress(peerPublicKey);
+        socket = new TcpClient();
+        socket.ReceiveBufferSize = 1 * 1024 * 1024;
+        socket.SendBufferSize = 1 * 1024 * 1024;
+    }
+
+    public AdnlClientState State { get; private set; } = AdnlClientState.Closed;
+
+    public event Action Connected;
+    public event Action Ready;
+    public event Action Closed;
+    public event Action<byte[]> DataReceived;
+    public event Action<Exception> ErrorOccurred;
+
+    async Task Handshake()
+    {
+        byte[] key = keys.Shared.Take(16).Concat(@params.Hash.Skip(16).Take(16)).ToArray();
+        byte[] nonce = @params.Hash.Take(4).Concat(keys.Shared.Skip(20).Take(12)).ToArray();
+
+        Cipher cipher = CipherFactory.CreateCipheriv(key, nonce);
+
+        byte[] payload = cipher.Update(@params.Bytes).ToArray();
+        byte[] packet = address.Hash.Concat(keys.Public).Concat(@params.Hash).Concat(payload).ToArray();
+
+        await networkStream.WriteAsync(packet, 0, packet.Length).ConfigureAwait(false);
+    }
+
+    void OnBeforeConnect()
+    {
+        if (State != AdnlClientState.Closed) return;
+        AdnlKeys keys = new(address.PublicKey);
+
+        this.keys = keys;
+        @params = new AdnlAesParams();
+        cipher = CipherFactory.CreateCipheriv(@params.TxKey, @params.TxNonce);
+        decipher = CipherFactory.CreateDecipheriv(@params.RxKey, @params.RxNonce);
+        buffer = Array.Empty<byte>();
+        State = AdnlClientState.Connecting;
+    }
+
+    async Task ReadDataAsync()
+    {
+        try
         {
-            _host = ConvertToIPAddress(host);
-            _port = port;
-            _address = new AdnlAddress(peerPublicKey);
-            _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
-            _socket.SendBufferSize = 1 * 1024 * 1024;
-        }
+            byte[] buffer = new byte[1024 * 1024];
 
-        public AdnlClientTcp(int host, int port, string peerPublicKey)
-        {
-            _host = ConvertToIPAddress(host);
-            _port = port;
-            _address = new AdnlAddress(peerPublicKey);
-            _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
-            _socket.SendBufferSize = 1 * 1024 * 1024;
-        }
-
-        public AdnlClientTcp(string host, int port, byte[] peerPublicKey)
-        {
-            _host = host;
-            _port = port;
-            _address = new AdnlAddress(peerPublicKey);
-            _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
-            _socket.SendBufferSize = 1 * 1024 * 1024;
-        }
-
-        public AdnlClientTcp(string host, int port, string peerPublicKey)
-        {
-            _host = host;
-            _port = port;
-            _address = new AdnlAddress(peerPublicKey);
-            _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
-            _socket.SendBufferSize = 1 * 1024 * 1024;
-        }
-
-        public AdnlClientState State { get; private set; } = AdnlClientState.Closed;
-
-        public event Action Connected;
-        public event Action Ready;
-        public event Action Closed;
-        public event Action<byte[]> DataReceived;
-        public event Action<Exception> ErrorOccurred;
-
-        async Task Handshake()
-        {
-            byte[] key = _keys.Shared.Take(16).Concat(_params.Hash.Skip(16).Take(16)).ToArray();
-            byte[] nonce = _params.Hash.Take(4).Concat(_keys.Shared.Skip(20).Take(12)).ToArray();
-
-            Cipher cipher = CipherFactory.CreateCipheriv(key, nonce);
-
-            byte[] payload = cipher.Update(_params.Bytes).ToArray();
-            byte[] packet = _address.Hash.Concat(_keys.Public).Concat(_params.Hash).Concat(payload).ToArray();
-
-            await _networkStream.WriteAsync(packet, 0, packet.Length).ConfigureAwait(false);
-        }
-
-        void OnBeforeConnect()
-        {
-            if (State != AdnlClientState.Closed) return;
-            AdnlKeys keys = new AdnlKeys(_address.PublicKey);
-
-            _keys = keys;
-            _params = new AdnlAesParams();
-            _cipher = CipherFactory.CreateCipheriv(_params.TxKey, _params.TxNonce);
-            _decipher = CipherFactory.CreateDecipheriv(_params.RxKey, _params.RxNonce);
-            _buffer = Array.Empty<byte>();
-            State = AdnlClientState.Connecting;
-        }
-
-        async Task ReadDataAsync()
-        {
-            try
+            while (socket.Connected)
             {
-                byte[] buffer = new byte[1024 * 1024];
-
-                while (_socket.Connected)
+                int bytesRead = await networkStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                if (bytesRead > 0)
                 {
-                    int bytesRead = await _networkStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-                    if (bytesRead > 0)
-                    {
-                        byte[] receivedData = new byte[bytesRead];
-                        Array.Copy(buffer, receivedData, bytesRead);
+                    byte[] receivedData = new byte[bytesRead];
+                    Array.Copy(buffer, receivedData, bytesRead);
 
-                        OnDataReceived(receivedData);
-                    }
-                    else if (bytesRead == 0)
-                    {
-                        break;
-                    }
+                    OnDataReceived(receivedData);
                 }
-            }
-            catch (Exception ex)
-            {
-                ErrorOccurred?.Invoke(ex);
-            }
-            finally
-            {
-                OnClose();
-            }
-        }
-
-        void OnReady()
-        {
-            State = AdnlClientState.Open;
-            Ready?.Invoke();
-        }
-
-        void OnClose()
-        {
-            State = AdnlClientState.Closed;
-            Closed?.Invoke();
-        }
-
-        void OnDataReceived(byte[] data)
-        {
-            _buffer = _buffer.Concat(Decrypt(data)).ToArray();
-            while (_buffer.Length >= AdnlPacket.PacketMinSize)
-            {
-                AdnlPacket? packet = AdnlPacket.Parse(_buffer);
-                if (packet == null) break;
-
-                _buffer = _buffer.Skip(packet.Length).ToArray();
-
-                if (State == AdnlClientState.Connecting)
+                else if (bytesRead == 0)
                 {
-                    if (packet.Payload.Length != 0)
-                    {
-                        ErrorOccurred?.Invoke(new Exception("AdnlClient: Bad handshake."));
-                        End();
-                        State = AdnlClientState.Closed;
-                    }
-                    else
-                    {
-                        OnReady();
-                    }
-
                     break;
                 }
-
-                DataReceived?.Invoke(packet.Payload);
             }
         }
-
-        public async Task Connect()
+        catch (Exception ex)
         {
-            OnBeforeConnect();
-            try
-            {
-                await _socket.ConnectAsync(_host, _port).ConfigureAwait(false);
-                _networkStream = _socket.GetStream();
-                Task.Run(async () => await ReadDataAsync().ConfigureAwait(false));
-                Connected?.Invoke();
-                await Handshake().ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                ErrorOccurred?.Invoke(e);
-                End();
-                State = AdnlClientState.Closed;
-            }
+            ErrorOccurred?.Invoke(ex);
         }
-
-        public void End()
+        finally
         {
-            if (State == AdnlClientState.Closed || State == AdnlClientState.Closing) return;
-            _socket.Close();
             OnClose();
         }
+    }
 
-        public async Task Write(byte[] data)
+    void OnReady()
+    {
+        State = AdnlClientState.Open;
+        Ready?.Invoke();
+    }
+
+    void OnClose()
+    {
+        State = AdnlClientState.Closed;
+        Closed?.Invoke();
+    }
+
+    void OnDataReceived(byte[] data)
+    {
+        buffer = buffer.Concat(Decrypt(data)).ToArray();
+        while (buffer.Length >= AdnlPacket.packetMinSize)
         {
-            AdnlPacket packet = new AdnlPacket(data);
-            byte[] encrypted = Encrypt(packet.Data);
-            await _networkStream.WriteAsync(encrypted, 0, encrypted.Length).ConfigureAwait(false);
-        }
+            AdnlPacket? packet = AdnlPacket.Parse(buffer);
+            if (packet == null) break;
 
-        byte[] Encrypt(byte[] data)
+            buffer = buffer.Skip(packet.Length).ToArray();
+
+            if (State == AdnlClientState.Connecting)
+            {
+                if (packet.Payload.Length != 0)
+                {
+                    ErrorOccurred?.Invoke(new Exception("AdnlClient: Bad handshake."));
+                    End();
+                    State = AdnlClientState.Closed;
+                }
+                else
+                {
+                    OnReady();
+                }
+
+                break;
+            }
+
+            DataReceived?.Invoke(packet.Payload);
+        }
+    }
+
+    public async Task Connect()
+    {
+        OnBeforeConnect();
+        try
         {
-            return _cipher.Update(data);
+            await socket.ConnectAsync(host, port).ConfigureAwait(false);
+            networkStream = socket.GetStream();
+            Task.Run(async () => await ReadDataAsync().ConfigureAwait(false));
+            Connected?.Invoke();
+            await Handshake().ConfigureAwait(false);
         }
-
-        byte[] Decrypt(byte[] data)
+        catch (Exception e)
         {
-            return _decipher.Update(data);
+            ErrorOccurred?.Invoke(e);
+            End();
+            State = AdnlClientState.Closed;
         }
+    }
 
-        static string ConvertToIPAddress(int number)
-        {
-            uint unsignedNumber = (uint)number;
-            byte[] bytes = new byte[4];
+    public void End()
+    {
+        if (State == AdnlClientState.Closed || State == AdnlClientState.Closing) return;
+        socket.Close();
+        OnClose();
+    }
 
-            bytes[0] = (byte)((unsignedNumber >> 24) & 0xFF);
-            bytes[1] = (byte)((unsignedNumber >> 16) & 0xFF);
-            bytes[2] = (byte)((unsignedNumber >> 8) & 0xFF);
-            bytes[3] = (byte)(unsignedNumber & 0xFF);
+    public async Task Write(byte[] data)
+    {
+        AdnlPacket packet = new(data);
+        byte[] encrypted = Encrypt(packet.Data);
+        await networkStream.WriteAsync(encrypted, 0, encrypted.Length).ConfigureAwait(false);
+    }
 
-            return $"{bytes[0]}.{bytes[1]}.{bytes[2]}.{bytes[3]}";
-        }
+    byte[] Encrypt(byte[] data)
+    {
+        return cipher.Update(data);
+    }
+
+    byte[] Decrypt(byte[] data)
+    {
+        return decipher.Update(data);
+    }
+
+    static string ConvertToIpAddress(int number)
+    {
+        uint unsignedNumber = (uint)number;
+        byte[] bytes = new byte[4];
+
+        bytes[0] = (byte)((unsignedNumber >> 24) & 0xFF);
+        bytes[1] = (byte)((unsignedNumber >> 16) & 0xFF);
+        bytes[2] = (byte)((unsignedNumber >> 8) & 0xFF);
+        bytes[3] = (byte)(unsignedNumber & 0xFF);
+
+        return $"{bytes[0]}.{bytes[1]}.{bytes[2]}.{bytes[3]}";
     }
 }

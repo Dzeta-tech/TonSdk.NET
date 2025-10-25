@@ -1,51 +1,50 @@
 ﻿using System;
 
-namespace TonSdk.Core.Boc
+namespace TonSdk.Core.Boc;
+
+public static class BocUtils
 {
-    public static class BocUtils
+    public static byte ReverseBits(this byte b)
     {
-        public static byte reverseBits(this byte b)
+        byte r = 0;
+        for (int i2 = 0; i2 < 8; i2++)
         {
-            byte r = 0;
-            for (int i2 = 0; i2 < 8; i2++)
-            {
-                r <<= 1; // Shift the result to the left
-                r |= (byte)(b & 1); // Write the least significant bit of the number to the result
-                b >>= 1; // Shift the number to the right
-            }
-
-            return r;
+            r <<= 1; // Shift the result to the left
+            r |= (byte)(b & 1); // Write the least significant bit of the number to the result
+            b >>= 1; // Shift the number to the right
         }
 
-        public static int bitLength(this int x)
+        return r;
+    }
+
+    public static int BitLength(this int x)
+    {
+        return x == 0 ? 1 : 32 - LeadingZeroCount((uint)(x < 0 ? ~x : x));
+    }
+
+    public static int BitLength(this uint x)
+    {
+        return x == 0 ? 1 : 32 - LeadingZeroCount(x);
+    }
+
+    static int LeadingZeroCount(uint x)
+    {
+        if (x == 0) return 32;
+        int count = 0;
+        for (int i = 31; i >= 0; i--)
         {
-            return x == 0 ? 1 : 32 - LeadingZeroCount((uint)(x < 0 ? ~x : x));
+            if ((x & (1u << i)) != 0) break;
+            count++;
         }
 
-        public static int bitLength(this uint x)
-        {
-            return x == 0 ? 1 : 32 - LeadingZeroCount(x);
-        }
+        return count;
+    }
 
-        static int LeadingZeroCount(uint x)
-        {
-            if (x == 0) return 32;
-            int count = 0;
-            for (int i = 31; i >= 0; i--)
-            {
-                if ((x & (1u << i)) != 0) break;
-                count++;
-            }
-
-            return count;
-        }
-
-        public static T[] slice<T>(this T[] source, int start, int end)
-        {
-            int l = end - start;
-            T[] slice = new T[l];
-            Array.Copy(source, start, slice, 0, l);
-            return slice;
-        }
+    public static T[] Slice<T>(this T[] source, int start, int end)
+    {
+        int l = end - start;
+        T[] slice = new T[l];
+        Array.Copy(source, start, slice, 0, l);
+        return slice;
     }
 }

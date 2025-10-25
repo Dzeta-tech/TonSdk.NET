@@ -3,45 +3,38 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using TonSdk.Core.Boc;
 
-namespace TonSdk.Core.Crypto
+namespace TonSdk.Core.Crypto;
+
+public class KeyPair(byte[] privateKey, byte[] publicKey)
 {
-    public class KeyPair
+    public byte[] PrivateKey { get; } = privateKey;
+
+    public byte[] PublicKey { get; } = publicKey;
+
+    static byte[] SignDetached(byte[] hash, byte[] privateKey)
     {
-        public KeyPair(byte[] privateKey, byte[] publicKey)
-        {
-            PrivateKey = privateKey;
-            PublicKey = publicKey;
-        }
+        Ed25519PrivateKeyParameters privateKeyParams = new(privateKey, 0);
 
-        public byte[] PrivateKey { get; }
+        ISigner signer = new Ed25519Signer();
+        signer.Init(true, privateKeyParams);
 
-        public byte[] PublicKey { get; }
+        signer.BlockUpdate(hash, 0, hash.Length);
+        byte[] signature = signer.GenerateSignature();
 
-        static byte[] SignDetached(byte[] hash, byte[] privateKey)
-        {
-            Ed25519PrivateKeyParameters privateKeyParams = new Ed25519PrivateKeyParameters(privateKey, 0);
+        return signature;
+    }
 
-            ISigner signer = new Ed25519Signer();
-            signer.Init(true, privateKeyParams);
+    /// <summary>
+    ///     Signs the hash of a Cell data using the specified key.
+    /// </summary>
+    /// <param name="data">The Cell data to sign.</param>
+    /// <param name="key">The key used for signing.</param>
+    /// <returns>The signature of the hashed Cell data.</returns>
+    public static byte[] Sign(Cell data, byte[] key)
+    {
+        byte[] hash = data.Hash.ToBytes();
+        byte[] signature = SignDetached(hash, key);
 
-            signer.BlockUpdate(hash, 0, hash.Length);
-            byte[] signature = signer.GenerateSignature();
-
-            return signature;
-        }
-
-        /// <summary>
-        ///     Signs the hash of a Cell data using the specified key.
-        /// </summary>
-        /// <param name="data">The Cell data to sign.</param>
-        /// <param name="key">The key used for signing.</param>
-        /// <returns>The signature of the hashed Cell data.</returns>
-        public static byte[] Sign(Cell data, byte[] key)
-        {
-            byte[] hash = data.Hash.ToBytes();
-            byte[] signature = SignDetached(hash, key);
-
-            return signature;
-        }
+        return signature;
     }
 }

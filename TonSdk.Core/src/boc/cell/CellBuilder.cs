@@ -1,89 +1,83 @@
 ﻿using System;
 
-namespace TonSdk.Core.Boc
+namespace TonSdk.Core.Boc;
+
+public class CellBuilder(int length = 1023) : BitsBuilderImpl<CellBuilder, Cell>(length)
 {
-    public class CellBuilder : BitsBuilderImpl<CellBuilder, Cell>
+    readonly Cell[] refs = new Cell[CellTraits.max_refs];
+
+    int refEn;
+
+    public int RemainderRefs => CellTraits.max_refs - refEn;
+
+    public Cell[] Refs => refs.Length == refEn ? refs : refs.Slice(0, refEn);
+
+    void CheckRefsOverflow(ref Cell[] refs)
     {
-        readonly Cell[] _refs;
+        if (refEn + refs.Length > CellTraits.max_refs) throw new ArgumentException("CellBuilder refs overflow");
+    }
 
-        int _ref_en;
+    void CheckRefsOverflow(int refsCnt)
+    {
+        if (refEn + refsCnt > CellTraits.max_refs) throw new ArgumentException("CellBuilder refs overflow");
+    }
 
-        public CellBuilder(int length = 1023) : base(length)
+    public CellBuilder StoreRefs(ref Cell[] refs, bool needCheck = true)
+    {
+        if (needCheck) CheckRefsOverflow(ref refs);
+
+        foreach (Cell cell in refs) this.refs[refEn++] = cell;
+
+        return this;
+    }
+
+    public CellBuilder StoreRef(Cell cell, bool needCheck = true)
+    {
+        if (needCheck) CheckRefsOverflow(1);
+
+        refs[refEn++] = cell;
+
+        return this;
+    }
+
+    public CellBuilder StoreCellSlice(CellSlice bs, bool needCheck = true)
+    {
+        if (needCheck)
         {
-            _refs = new Cell[CellTraits.max_refs];
+            CheckBitsOverflow(bs.RemainderBits);
+            CheckRefsOverflow(bs.RemainderRefs);
         }
 
-        public int RemainderRefs => CellTraits.max_refs - _ref_en;
+        StoreBits(bs.Bits, false);
+        Cell[] r = bs.Refs;
+        return StoreRefs(ref r, false);
+    }
 
-        public Cell[] Refs => _refs.Length == _ref_en ? _refs : _refs.slice(0, _ref_en);
-
-        void CheckRefsOverflow(ref Cell[] refs)
+    public CellBuilder StoreOptRef(Cell? cell, bool needCheck = true)
+    {
+        bool opt = cell != null;
+        if (needCheck)
         {
-            if (_ref_en + refs.Length > CellTraits.max_refs) throw new ArgumentException("CellBuilder refs overflow");
+            CheckBitsOverflow(1);
+            if (opt) CheckRefsOverflow(1);
         }
 
-        void CheckRefsOverflow(int refs_cnt)
-        {
-            if (_ref_en + refs_cnt > CellTraits.max_refs) throw new ArgumentException("CellBuilder refs overflow");
-        }
+        if (opt) StoreRef(cell!, false);
+        return StoreBit(opt, false);
+    }
 
-        public CellBuilder StoreRefs(ref Cell[] refs, bool needCheck = true)
-        {
-            if (needCheck) CheckRefsOverflow(ref refs);
+    public CellBuilder StoreDict<TK, TV>(HashmapE<TK, TV> hashmap, bool needCheck = true)
+    {
+        return StoreCellSlice(hashmap.Build().Parse(), needCheck);
+    }
 
-            foreach (Cell cell in refs) _refs[_ref_en++] = cell;
+    public override Cell Build()
+    {
+        return new Cell(Data, Refs);
+    }
 
-            return this;
-        }
-
-        public CellBuilder StoreRef(Cell cell, bool needCheck = true)
-        {
-            if (needCheck) CheckRefsOverflow(1);
-
-            _refs[_ref_en++] = cell;
-
-            return this;
-        }
-
-        public CellBuilder StoreCellSlice(CellSlice bs, bool needCheck = true)
-        {
-            if (needCheck)
-            {
-                CheckBitsOverflow(bs.RemainderBits);
-                CheckRefsOverflow(bs.RemainderRefs);
-            }
-
-            StoreBits(bs.Bits, false);
-            Cell[] r = bs.Refs;
-            return StoreRefs(ref r, false);
-        }
-
-        public CellBuilder StoreOptRef(Cell? cell, bool needCheck = true)
-        {
-            bool opt = cell != null;
-            if (needCheck)
-            {
-                CheckBitsOverflow(1);
-                if (opt) CheckRefsOverflow(1);
-            }
-
-            if (opt) StoreRef(cell!, false);
-            return StoreBit(opt, false);
-        }
-
-        public CellBuilder StoreDict<K, V>(HashmapE<K, V> hashmap, bool needCheck = true)
-        {
-            return StoreCellSlice(hashmap.Build().Parse(), needCheck);
-        }
-
-        public override Cell Build()
-        {
-            return new Cell(Data, Refs);
-        }
-
-        public override CellBuilder Clone()
-        {
-            throw new NotImplementedException();
-        }
+    public override CellBuilder Clone()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -1,59 +1,58 @@
 ﻿using System;
 
-namespace TonSdk.Adnl
+namespace TonSdk.Adnl;
+
+internal class Cipher
 {
-    internal class Cipher
+    readonly AesCtrMode cipher;
+
+    internal Cipher(byte[] key, byte[] iv)
     {
-        readonly AesCtrMode _cipher;
+        if (key.Length != 32)
+            throw new ArgumentException("Invalid key length. Key must be 256 bits.");
 
-        internal Cipher(byte[] key, byte[] iv)
-        {
-            if (key.Length != 32)
-                throw new ArgumentException("Invalid key length. Key must be 256 bits.");
+        if (iv.Length != 16)
+            throw new ArgumentException("Invalid IV length. IV must be 128 bits.");
 
-            if (iv.Length != 16)
-                throw new ArgumentException("Invalid IV length. IV must be 128 bits.");
-
-            _cipher = new AesCtrMode(key, new AesCounter(iv));
-        }
-
-        internal byte[] Update(byte[] data)
-        {
-            return _cipher.Encrypt(data);
-        }
+        cipher = new AesCtrMode(key, new AesCounter(iv));
     }
 
-    internal class Decipher
+    internal byte[] Update(byte[] data)
     {
-        readonly AesCtrMode _cipher;
+        return cipher.Encrypt(data);
+    }
+}
 
-        internal Decipher(byte[] key, byte[] iv)
-        {
-            if (key.Length != 32)
-                throw new ArgumentException("Invalid key length. Key must be 256 bits.");
+internal class Decipher
+{
+    readonly AesCtrMode cipher;
 
-            if (iv.Length != 16)
-                throw new ArgumentException("Invalid IV length. IV must be 128 bits.");
+    internal Decipher(byte[] key, byte[] iv)
+    {
+        if (key.Length != 32)
+            throw new ArgumentException("Invalid key length. Key must be 256 bits.");
 
-            _cipher = new AesCtrMode(key, new AesCounter(iv));
-        }
+        if (iv.Length != 16)
+            throw new ArgumentException("Invalid IV length. IV must be 128 bits.");
 
-        internal byte[] Update(byte[] data)
-        {
-            return _cipher.Decrypt(data);
-        }
+        cipher = new AesCtrMode(key, new AesCounter(iv));
     }
 
-    internal static class CipherFactory
+    internal byte[] Update(byte[] data)
     {
-        internal static Cipher CreateCipheriv(byte[] key, byte[] iv)
-        {
-            return new Cipher(key, iv);
-        }
+        return cipher.Decrypt(data);
+    }
+}
 
-        internal static Decipher CreateDecipheriv(byte[] key, byte[] iv)
-        {
-            return new Decipher(key, iv);
-        }
+internal static class CipherFactory
+{
+    internal static Cipher CreateCipheriv(byte[] key, byte[] iv)
+    {
+        return new Cipher(key, iv);
+    }
+
+    internal static Decipher CreateDecipheriv(byte[] key, byte[] iv)
+    {
+        return new Decipher(key, iv);
     }
 }

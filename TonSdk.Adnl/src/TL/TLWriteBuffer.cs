@@ -3,127 +3,126 @@ using System.IO;
 using System.Numerics;
 using System.Text;
 
-namespace TonSdk.Adnl.TL
+namespace TonSdk.Adnl.TL;
+
+public class TLWriteBuffer
 {
-    public class TLWriteBuffer
+    MemoryStream stream;
+    BinaryWriter writer;
+
+    public TLWriteBuffer()
     {
-        MemoryStream _stream;
-        BinaryWriter _writer;
+        stream = new MemoryStream(128);
+        writer = new BinaryWriter(stream);
+    }
 
-        public TLWriteBuffer()
+    void EnsureSize(int needBytes)
+    {
+        if (stream.Length - stream.Position < needBytes)
         {
-            _stream = new MemoryStream(128);
-            _writer = new BinaryWriter(_stream);
+            int newLength = (int)stream.Length * 2;
+            MemoryStream newStream = new(newLength);
+            stream.Position = 0;
+            stream.CopyTo(newStream);
+            stream = newStream;
+            writer = new BinaryWriter(stream);
+        }
+    }
+
+    public void WriteInt32(int val)
+    {
+        EnsureSize(4);
+        writer.Write(val);
+    }
+
+    public void WriteUInt32(uint val)
+    {
+        EnsureSize(4);
+        writer.Write(val);
+    }
+
+    public void WriteInt64(long val)
+    {
+        EnsureSize(8);
+        writer.Write(val);
+    }
+
+    public void WriteUInt8(byte val)
+    {
+        EnsureSize(1);
+        writer.Write(val);
+    }
+
+    public void WriteInt256(BigInteger val)
+    {
+        EnsureSize(32);
+        Span<byte> buffer = stackalloc byte[32];
+        buffer.Clear();
+        if (!val.TryWriteBytes(buffer, out int bytesWritten)) throw new Exception("Invalid int256 length");
+        if (val < 0 && bytesWritten < 32)
+            // two's complement representation
+            buffer[bytesWritten..].Fill(0xFF);
+
+        writer.Write(buffer);
+    }
+
+    public void WriteBytes(byte[] data, int size)
+    {
+        if (data.Length != size) throw new Exception($"Input array size not equals to {size}.");
+        EnsureSize(size);
+        writer.Write(data);
+    }
+
+    public void WriteBuffer(byte[] buf)
+    {
+        EnsureSize(buf.Length + 4);
+        int len = 0;
+        if (buf.Length <= 253)
+        {
+            WriteUInt8((byte)buf.Length);
+            len += 1;
+        }
+        else
+        {
+            WriteUInt8(254);
+            EnsureSize(3 + buf.Length);
+            byte[] lengthBytes = BitConverter.GetBytes(buf.Length);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            writer.Write(lengthBytes, 0, 3);
+            len += 4;
         }
 
-        void EnsureSize(int needBytes)
+        foreach (byte byteVal in buf)
         {
-            if (_stream.Length - _stream.Position < needBytes)
-            {
-                int newLength = (int)_stream.Length * 2;
-                MemoryStream newStream = new MemoryStream(newLength);
-                _stream.Position = 0;
-                _stream.CopyTo(newStream);
-                _stream = newStream;
-                _writer = new BinaryWriter(_stream);
-            }
+            WriteUInt8(byteVal);
+            len += 1;
         }
 
-        public void WriteInt32(int val)
+        while (len % 4 != 0)
         {
-            EnsureSize(4);
-            _writer.Write(val);
+            WriteUInt8(0);
+            len += 1;
         }
+    }
 
-        public void WriteUInt32(uint val)
-        {
-            EnsureSize(4);
-            _writer.Write(val);
-        }
+    public void WriteString(string src)
+    {
+        WriteBuffer(Encoding.UTF8.GetBytes(src));
+    }
 
-        public void WriteInt64(long val)
-        {
-            EnsureSize(8);
-            _writer.Write(val);
-        }
+    public void WriteBool(bool src)
+    {
+        WriteUInt32(src ? 0x997275b5 : 0xbc799737);
+    }
 
-        public void WriteUInt8(byte val)
-        {
-            EnsureSize(1);
-            _writer.Write(val);
-        }
+    public void WriteVector<T>(Action<T, TLWriteBuffer> codec, T[] data)
+    {
+        WriteUInt32((uint)data.Length);
+        foreach (T d in data) codec(d, this);
+    }
 
-        public void WriteInt256(BigInteger val)
-        {
-            EnsureSize(32);
-            Span<byte> buffer = stackalloc byte[32];
-            buffer.Clear();
-            if (!val.TryWriteBytes(buffer, out int bytesWritten)) throw new Exception("Invalid int256 length");
-            if (val < 0 && bytesWritten < 32)
-                // two's complement representation
-                buffer[bytesWritten..].Fill(0xFF);
-
-            _writer.Write(buffer);
-        }
-
-        public void WriteBytes(byte[] data, int size)
-        {
-            if (data.Length != size) throw new Exception($"Input array size not equals to {size}.");
-            EnsureSize(size);
-            _writer.Write(data);
-        }
-
-        public void WriteBuffer(byte[] buf)
-        {
-            EnsureSize(buf.Length + 4);
-            int len = 0;
-            if (buf.Length <= 253)
-            {
-                WriteUInt8((byte)buf.Length);
-                len += 1;
-            }
-            else
-            {
-                WriteUInt8(254);
-                EnsureSize(3 + buf.Length);
-                byte[] lengthBytes = BitConverter.GetBytes(buf.Length);
-                if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
-                _writer.Write(lengthBytes, 0, 3);
-                len += 4;
-            }
-
-            foreach (byte byteVal in buf)
-            {
-                WriteUInt8(byteVal);
-                len += 1;
-            }
-
-            while (len % 4 != 0)
-            {
-                WriteUInt8(0);
-                len += 1;
-            }
-        }
-
-        public void WriteString(string src)
-        {
-            WriteBuffer(Encoding.UTF8.GetBytes(src));
-        }
-
-        public void WriteBool(bool src)
-        {
-            WriteUInt32(src ? 0x997275b5 : 0xbc799737);
-        }
-
-        public void WriteVector<T>(Action<T, TLWriteBuffer> codec, T[] data)
-        {
-            WriteUInt32((uint)data.Length);
-            foreach (T d in data) codec(d, this);
-        }
-
-        public byte[] Build()
-        {
-            return _stream.ToArray();
-        }
+    public byte[] Build()
+    {
+        return stream.ToArray();
     }
 }

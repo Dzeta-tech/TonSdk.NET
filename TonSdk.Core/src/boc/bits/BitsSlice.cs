@@ -5,43 +5,43 @@ using System.Text;
 
 namespace TonSdk.Core.Boc
 {
-    public abstract class BitsSliceImpl<T, U> where T : BitsSliceImpl<T, U>
+    public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
     {
-        protected Bits _bits;
-        protected int _bits_en;
-        protected int _bits_st;
+        protected Bits __Bits;
+        protected int BitsEn;
+        protected int BitsSt;
 
         public BitsSliceImpl(BitArray bits)
         {
-            _bits = new Bits(bits);
-            _bits_en = _bits.Length;
+            __Bits = new Bits(bits);
+            BitsEn = __Bits.Length;
         }
 
         public BitsSliceImpl(Bits bits)
         {
-            _bits = bits;
-            _bits_en = _bits.Length;
+            __Bits = bits;
+            BitsEn = __Bits.Length;
         }
 
-        protected BitsSliceImpl(Bits bits, int bits_st, int bits_en)
+        protected BitsSliceImpl(Bits bits, int bitsSt, int bitsEn)
         {
-            _bits = bits;
-            _bits_st = bits_st;
-            _bits_en = bits_en;
+            __Bits = bits;
+            BitsSt = bitsSt;
+            BitsEn = bitsEn;
         }
 
-        public int RemainderBits => _bits_en - _bits_st;
+        public int RemainderBits => BitsEn - BitsSt;
 
-        public Bits Bits => new Bits(_bits.Data.slice(_bits_st, _bits_en));
+        public Bits Bits => new(BitArrayUtils.Slice(__Bits.Data, BitsSt, BitsEn));
 
         protected void CheckBitsUnderflow(int bitEnd)
         {
-            if (bitEnd > _bits_en) throw new ArgumentException("Bits underflow");
+            if (bitEnd > BitsEn) throw new ArgumentException("Bits underflow");
         }
 
         protected bool CheckBitsUnderflowQ(int bitEnd)
         {
-            return bitEnd > _bits_en;
+            return bitEnd > BitsEn;
         }
 
         protected void CheckSize(int size)
@@ -52,27 +52,27 @@ namespace TonSdk.Core.Boc
         public T SkipBits(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
-            _bits_st = bitEnd;
+            BitsSt = bitEnd;
             return (T)this;
         }
 
         public Bits ReadBits(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
-            return new Bits(_bits.Data.slice(_bits_st, bitEnd));
+            return new Bits(BitArrayUtils.Slice(__Bits.Data, BitsSt, bitEnd));
         }
 
         public Bits LoadBits(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
-            BitArray bits = _bits.Data.slice(_bits_st, bitEnd);
-            _bits_st = bitEnd;
+            BitArray bits = BitArrayUtils.Slice(__Bits.Data, BitsSt, bitEnd);
+            BitsSt = bitEnd;
             return new Bits(bits);
         }
 
@@ -83,31 +83,31 @@ namespace TonSdk.Core.Boc
 
         public bool ReadBit()
         {
-            int bitEnd = _bits_st + 1;
+            int bitEnd = BitsSt + 1;
             CheckBitsUnderflow(bitEnd);
-            return _bits.Data[_bits_st];
+            return __Bits.Data[BitsSt];
         }
 
         public bool ReadBit(int idx)
         {
-            int bitEnd = _bits_st + idx + 1;
+            int bitEnd = BitsSt + idx + 1;
             CheckBitsUnderflow(bitEnd);
-            return _bits.Data[_bits_st + idx];
+            return __Bits.Data[BitsSt + idx];
         }
 
         public bool LoadBit()
         {
-            int bitEnd = _bits_st + 1;
+            int bitEnd = BitsSt + 1;
             CheckBitsUnderflow(bitEnd);
-            bool bit = _bits.Data[_bits_st];
-            _bits_st = bitEnd;
+            bool bit = __Bits.Data[BitsSt];
+            BitsSt = bitEnd;
             return bit;
         }
 
         public BigInteger ReadUInt(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
             return _unsafeReadBigInteger(size);
         }
@@ -115,17 +115,17 @@ namespace TonSdk.Core.Boc
         public BigInteger LoadUInt(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
             BigInteger result = _unsafeReadBigInteger(size);
-            _bits_st = bitEnd;
+            BitsSt = bitEnd;
             return result;
         }
 
         public BigInteger ReadInt(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
             return _unsafeReadBigInteger(size, true);
         }
@@ -133,42 +133,42 @@ namespace TonSdk.Core.Boc
         public BigInteger LoadInt(int size)
         {
             CheckSize(size);
-            int bitEnd = _bits_st + size;
+            int bitEnd = BitsSt + size;
             CheckBitsUnderflow(bitEnd);
             BigInteger result = _unsafeReadBigInteger(size, true);
-            _bits_st = bitEnd;
+            BitsSt = bitEnd;
             return result;
         }
 
-        public BigInteger ReadUInt32LE()
+        public BigInteger ReadUInt32Le()
         {
-            int bitEnd = _bits_st + 32;
+            int bitEnd = BitsSt + 32;
             CheckBitsUnderflow(bitEnd);
             return _unsafeReadBigInteger(32, false, true);
         }
 
-        public BigInteger LoadUInt32LE()
+        public BigInteger LoadUInt32Le()
         {
-            int bitEnd = _bits_st + 32;
+            int bitEnd = BitsSt + 32;
             CheckBitsUnderflow(bitEnd);
             BigInteger result = _unsafeReadBigInteger(32, false, true);
-            _bits_st = bitEnd;
+            BitsSt = bitEnd;
             return result;
         }
 
-        public BigInteger ReadUInt64LE()
+        public BigInteger ReadUInt64Le()
         {
-            int bitEnd = _bits_st + 64;
+            int bitEnd = BitsSt + 64;
             CheckBitsUnderflow(bitEnd);
             return _unsafeReadBigInteger(64, false, true);
         }
 
-        public BigInteger LoadUInt64LE()
+        public BigInteger LoadUInt64Le()
         {
-            int bitEnd = _bits_st + 64;
+            int bitEnd = BitsSt + 64;
             CheckBitsUnderflow(bitEnd);
             BigInteger result = _unsafeReadBigInteger(64, false, true);
-            _bits_st = bitEnd;
+            BitsSt = bitEnd;
             return result;
         }
 
@@ -208,7 +208,7 @@ namespace TonSdk.Core.Boc
             int sizeBytes = (int)ReadUInt(size);
             int sizeBits = sizeBytes * 8;
 
-            CheckBitsUnderflow(_bits_st + size + sizeBits);
+            CheckBitsUnderflow(BitsSt + size + sizeBits);
 
             if (inplace)
             {
@@ -249,7 +249,7 @@ namespace TonSdk.Core.Boc
                     if (prefixAndAnycast == 0b101)
                         throw new AddressTypeNotSupportedError("Anycast addresses are not supported");
 
-                    CheckBitsUnderflow(_bits_st + 267);
+                    CheckBitsUnderflow(BitsSt + 267);
                     if (inplace)
                     {
                         SkipBits(3);
@@ -263,7 +263,7 @@ namespace TonSdk.Core.Boc
                 {
                     int len = (int)LoadInt(9);
                     Bits extAddr = LoadBits(len);
-                    ExternalAddress address = new ExternalAddress(len, extAddr);
+                    ExternalAddress address = new(len, extAddr);
                     return null;
                 }
                 case 0b11: // addr_var
@@ -304,7 +304,7 @@ namespace TonSdk.Core.Boc
             return Encoding.UTF8.GetString(LoadBytes(size));
         }
 
-        public abstract U Restore();
+        public abstract TU Restore();
 
         BigInteger _unsafeReadBigInteger(int size, bool sgn = false, bool le = false)
         {
@@ -312,7 +312,7 @@ namespace TonSdk.Core.Boc
 
             if (le)
             {
-                BitArray bits = new BitArray(LoadBits(size).ToBytes());
+                BitArray bits = new(LoadBits(size).ToBytes());
                 for (int i = 0; i < size; i++)
                     if (bits[i])
                         result |= BigInteger.One << i;
@@ -320,7 +320,7 @@ namespace TonSdk.Core.Boc
             else
             {
                 for (int i = 0; i < size; i++)
-                    if (_bits.Data[_bits_st + i])
+                    if (__Bits.Data[BitsSt + i])
                         result |= BigInteger.One << (size - 1 - i);
             }
 
@@ -351,7 +351,7 @@ namespace TonSdk.Core.Boc
 
         public override Bits Restore()
         {
-            return _bits;
+            return __Bits;
         }
     }
 }
