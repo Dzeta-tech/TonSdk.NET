@@ -18,7 +18,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        dotnet-version: |
+          7.0.x
+          8.0.x
     
     - name: Restore
       run: dotnet restore TonSdk.NET.sln
@@ -40,7 +42,9 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+        dotnet-version: |
+          7.0.x
+          8.0.x
     
     - name: Restore
       run: dotnet restore TonSdk.NET.sln
