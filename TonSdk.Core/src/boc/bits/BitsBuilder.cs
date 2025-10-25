@@ -87,6 +87,11 @@ namespace TonSdk.Core.Boc {
             return StoreBits(bits, needCheck);
         }
 
+        public T StoreBytes(ReadOnlySpan<byte> b, bool needCheck = true) {
+            var bits = new Bits(b.ToArray());
+            return StoreBits(bits, needCheck);
+        }
+
         public T StoreString(string s, bool needCheck = true) {
             var bytes = Encoding.UTF8.GetBytes(s);
             return StoreBytes(bytes, needCheck);
@@ -178,8 +183,8 @@ namespace TonSdk.Core.Boc {
 
             CheckBitsOverflow(267);
             StoreUInt(0b100, 3);
-            StoreInt(address.GetWorkchain(), 8);
-            StoreBytes(address.GetHash());
+            StoreInt(address.Value.Workchain, 8);
+            StoreBytes(address.Value.Hash);
             return (T)this;
         }
 

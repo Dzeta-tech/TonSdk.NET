@@ -296,7 +296,7 @@ namespace TonSdk.Core.Block
     };
     
     public struct ExtOutMsgInfoOptions {
-        public Address Src;
+        public Address? Src;
         public Address? Dest;
         public ulong CreatedLt;
         public uint CreatedAt;

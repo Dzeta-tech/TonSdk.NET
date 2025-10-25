@@ -140,8 +140,8 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBytes(block.RootHash, 32);
             writer.WriteBytes(block.FileHash, 32);
             
-            writer.WriteInt32(account.GetWorkchain());
-            writer.WriteBytes(account.GetHash(), 32);
+            writer.WriteInt32(account.Workchain);
+            writer.WriteBytes(account.Hash.ToArray(), 32);
             return EncodeBase(writer);
         }
 
@@ -159,8 +159,8 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteBytes(block.RootHash, 32);
             writer.WriteBytes(block.FileHash, 32);
             
-            writer.WriteInt32(account.GetWorkchain());
-            writer.WriteBytes(account.GetHash(), 32);
+            writer.WriteInt32(account.Workchain);
+            writer.WriteBytes(account.Hash.ToArray(), 32);
             
             writer.WriteInt64(methodId);
             writer.WriteBuffer(stack);
@@ -209,8 +209,8 @@ namespace TonSdk.Adnl.LiteClient
                 Encoding.UTF8.GetBytes("liteServer.getTransactions count:# account:liteServer.accountId lt:long hash:int256 = liteServer.TransactionList")),0));
             writer.WriteInt32((int)count);
             
-            writer.WriteInt32(account.GetWorkchain());
-            writer.WriteBytes(account.GetHash(), 32);
+            writer.WriteInt32(account.Workchain);
+            writer.WriteBytes(account.Hash.ToArray(), 32);
             
             writer.WriteInt64(lt);
             writer.WriteBytes(hash, 32);
@@ -270,7 +270,7 @@ namespace TonSdk.Adnl.LiteClient
                         writer.WriteInt64(id.Lt);
                         break;
                     case TransactionId3 id3:
-                        writer.WriteBytes(id3.Account.GetHash(), 32);
+                        writer.WriteBytes(id3.Account.Hash.ToArray(), 32);
                         writer.WriteInt64(id3.Lt);
                         break;
                 }

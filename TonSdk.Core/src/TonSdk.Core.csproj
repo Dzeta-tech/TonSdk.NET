@@ -4,6 +4,8 @@
         <TargetFrameworks>net6.0;net7.0;netstandard2.0;netstandard2.1</TargetFrameworks>
         <ImplicitUsings>disable</ImplicitUsings>
         <LangVersion>8.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <RootNamespace>TonSdk.Core</RootNamespace>
         <PackageId>Dzeta.TonSdk.Core</PackageId>
         <Version>0.3.10</Version>

@@ -4,6 +4,7 @@
         <TargetFrameworks>net6.0;net7.0;netstandard2.1</TargetFrameworks>
         <ImplicitUsings>disable</ImplicitUsings>
         <LangVersion>8.0</LangVersion>
+        <Nullable>enable</Nullable>
         <RootNamespace>TonSdk.Adnl</RootNamespace>
         <PackageId>Dzeta.TonSdk.Adnl</PackageId>
         <Version>0.2.5</Version>
