@@ -273,14 +273,14 @@ namespace TonSdk.Adnl.LiteClient
                     _logger.LogDebug("OnDataReceived: Matched query {QueryId}, liteQuerySize={LiteQuerySize}bytes",
                         queryIdHex, liteQuery.Length);
                     
-                    // Parse lite server response (has its own TL structure)
+                    // Check for lite server error (peek at first 4 bytes without consuming)
                     var liteBuffer = new TL.TLReadBuffer(liteQuery);
                     uint responseCode = liteBuffer.ReadUInt32();
                     
                     _logger.LogDebug("OnDataReceived: Response code={ResponseCode:X8}", responseCode);
                     
-                    // Check for liteServer.error (0x4E4F4301)
-                    if (responseCode == 0x4E4F4301)
+                    // Check for liteServer.error (0xBBA9E148 = -1146494648)
+                    if (responseCode == 0xBBA9E148)
                     {
                         int errorCode = liteBuffer.ReadInt32();
                         string errorMessage = liteBuffer.ReadString();
@@ -291,7 +291,6 @@ namespace TonSdk.Adnl.LiteClient
                     }
                     
                     // Return the remaining buffer (positioned after response code) as byte[]
-                    // Note: Some decoders may need special handling for empty/small responses
                     byte[] responseData = liteBuffer.ReadObject();
                     _logger.LogDebug("OnDataReceived: Response data size={ResponseSize}bytes, passing to decoder", responseData.Length);
                     context.TaskCompletionSource.TrySetResult(responseData);
