@@ -1,24 +1,24 @@
 ﻿using System;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Security;
 using System.Numerics;
 using System.Security.Cryptography;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace TonSdk.Adnl
 {
     internal class Ed25519
     {
-        private static readonly BigInteger Ed25519P =
+        static readonly BigInteger Ed25519P =
             BigInteger.Parse("57896044618658097711785492504343953926634992332820282019728792003956564819949");
 
-        private Ed25519PrivateKeyParameters _privateKey;
-        private Ed25519PublicKeyParameters _publicKey;
+        readonly Ed25519PrivateKeyParameters _privateKey;
+        readonly Ed25519PublicKeyParameters _publicKey;
 
         internal Ed25519()
         {
-            var keyPairGenerator = new Ed25519KeyPairGenerator();
+            Ed25519KeyPairGenerator keyPairGenerator = new Ed25519KeyPairGenerator();
             keyPairGenerator.Init(new Ed25519KeyGenerationParameters(new SecureRandom()));
 
             AsymmetricCipherKeyPair keyPair = keyPairGenerator.GenerateKeyPair();
@@ -29,7 +29,7 @@ namespace TonSdk.Adnl
         internal byte[] PublicKey => _publicKey.GetEncoded();
         internal byte[] PrivateKey => _privateKey.GetEncoded();
 
-        private byte[] Ed25519PrivateKeyToCurve25519(byte[] privateKey)
+        byte[] Ed25519PrivateKeyToCurve25519(byte[] privateKey)
         {
             using SHA512 sha512 = SHA512.Create();
             byte[] sha512Hash = sha512.ComputeHash(privateKey);
@@ -44,7 +44,7 @@ namespace TonSdk.Adnl
             return x25519PrivateKey;
         }
 
-        private static byte[] EdwardsToMontgomeryPublicKey(byte[] publicKey)
+        static byte[] EdwardsToMontgomeryPublicKey(byte[] publicKey)
         {
             if (publicKey == null || publicKey.Length != 32) throw new ArgumentException("Invalid public key.");
 
@@ -52,7 +52,7 @@ namespace TonSdk.Adnl
             Array.Copy(publicKey, yBytes, publicKey.Length);
 
             yBytes[^1] &= 0b01111111; // clear sign bit
-            BigInteger y = new BigInteger(yBytes, isUnsigned: true, isBigEndian: false);
+            BigInteger y = new BigInteger(yBytes, true);
 
             BigInteger montgomeryU =
                 (BigInteger.One + y) * BigInteger.ModPow(BigInteger.One - y,
@@ -80,11 +80,10 @@ namespace TonSdk.Adnl
 
     internal class AdnlKeys
     {
-        private byte[] _peer;
-        private byte[] _public;
-        private byte[] _shared;
-
-        private Ed25519 _ed25519;
+        readonly Ed25519 _ed25519;
+        readonly byte[] _peer;
+        byte[] _public;
+        byte[] _shared;
 
         internal AdnlKeys(byte[] peerPublicKey)
         {

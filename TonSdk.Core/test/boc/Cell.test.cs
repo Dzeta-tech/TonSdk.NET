@@ -1,8 +1,5 @@
-using TonSdk.Core.Boc;
-
 namespace TonSdk.Core.Tests;
 
-
-public class CellTest {
-
+public class CellTest
+{
 }

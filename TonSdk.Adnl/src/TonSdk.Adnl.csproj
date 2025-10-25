@@ -20,12 +20,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="README.MD" Pack="true" PackagePath="" />
-        <None Include="../../LICENSE" Pack="true" PackagePath="" />
+        <None Include="README.MD" Pack="true" PackagePath=""/>
+        <None Include="../../LICENSE" Pack="true" PackagePath=""/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\TonSdk.Core\src\TonSdk.Core.csproj" />
+        <ProjectReference Include="..\..\TonSdk.Core\src\TonSdk.Core.csproj"/>
     </ItemGroup>
 
 </Project>

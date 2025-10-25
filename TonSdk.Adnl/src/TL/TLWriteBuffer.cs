@@ -1,17 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Numerics;
 using System.Text;
-using TonSdk.Core.Crypto;
 
 namespace TonSdk.Adnl.TL
 {
     public class TLWriteBuffer
     {
-        private MemoryStream _stream;
-        private BinaryWriter _writer;
+        MemoryStream _stream;
+        BinaryWriter _writer;
 
         public TLWriteBuffer()
         {
@@ -19,12 +16,12 @@ namespace TonSdk.Adnl.TL
             _writer = new BinaryWriter(_stream);
         }
 
-        private void EnsureSize(int needBytes)
+        void EnsureSize(int needBytes)
         {
             if (_stream.Length - _stream.Position < needBytes)
             {
                 int newLength = (int)_stream.Length * 2;
-                var newStream = new MemoryStream(newLength);
+                MemoryStream newStream = new MemoryStream(newLength);
                 _stream.Position = 0;
                 _stream.CopyTo(newStream);
                 _stream = newStream;
@@ -61,15 +58,10 @@ namespace TonSdk.Adnl.TL
             EnsureSize(32);
             Span<byte> buffer = stackalloc byte[32];
             buffer.Clear();
-            if (!val.TryWriteBytes(buffer, out var bytesWritten))
-            {
-                throw new Exception("Invalid int256 length");
-            }
+            if (!val.TryWriteBytes(buffer, out int bytesWritten)) throw new Exception("Invalid int256 length");
             if (val < 0 && bytesWritten < 32)
-            {
                 // two's complement representation
                 buffer[bytesWritten..].Fill(0xFF);
-            }
 
             _writer.Write(buffer);
         }
@@ -80,7 +72,7 @@ namespace TonSdk.Adnl.TL
             EnsureSize(size);
             _writer.Write(data);
         }
-        
+
         public void WriteBuffer(byte[] buf)
         {
             EnsureSize(buf.Length + 4);
@@ -95,15 +87,12 @@ namespace TonSdk.Adnl.TL
                 WriteUInt8(254);
                 EnsureSize(3 + buf.Length);
                 byte[] lengthBytes = BitConverter.GetBytes(buf.Length);
-                if (!BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(lengthBytes);
-                }
+                if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
                 _writer.Write(lengthBytes, 0, 3);
                 len += 4;
             }
 
-            foreach (var byteVal in buf)
+            foreach (byte byteVal in buf)
             {
                 WriteUInt8(byteVal);
                 len += 1;
@@ -129,10 +118,7 @@ namespace TonSdk.Adnl.TL
         public void WriteVector<T>(Action<T, TLWriteBuffer> codec, T[] data)
         {
             WriteUInt32((uint)data.Length);
-            foreach (T d in data)
-            {
-                codec(d, this);
-            }
+            foreach (T d in data) codec(d, this);
         }
 
         public byte[] Build()

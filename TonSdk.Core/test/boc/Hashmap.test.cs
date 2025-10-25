@@ -7,7 +7,7 @@ public class HashmapTest
     [Test]
     public void ShouldSerializeDictionary()
     {
-        var hmOptions = new HashmapOptions<int, int>()
+        HashmapOptions<int, int> hmOptions = new()
         {
             KeySize = 16,
             Serializers = new HashmapSerializers<int, int>
@@ -18,12 +18,9 @@ public class HashmapTest
             Deserializers = null
         };
 
-        var hm = new HashmapE<int, int>(hmOptions);
+        HashmapE<int, int> hm = new(hmOptions);
 
-        for (int i = 1; i < 100; i++)
-        {
-            hm.Set(i, Random.Shared.Next(1, 50000));
-        }
+        for (int i = 1; i < 100; i++) hm.Set(i, Random.Shared.Next(1, 50000));
 
         Assert.DoesNotThrow(() => hm.Serialize());
     }

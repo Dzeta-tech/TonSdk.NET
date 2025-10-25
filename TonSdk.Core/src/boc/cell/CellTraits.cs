@@ -1,6 +1,7 @@
-﻿namespace TonSdk.Core.Boc {
-
-    public enum CellType : int {
+﻿namespace TonSdk.Core.Boc
+{
+    public enum CellType
+    {
         ORDINARY = -1,
         PRUNED_BRANCH = 1,
         LIBRARY_REFERENCE = 2,
@@ -8,7 +9,8 @@
         MERKLE_UPDATE = 4
     }
 
-    public static class CellTraits {
+    public static class CellTraits
+    {
         public const int max_refs = 4;
         public const int max_bytes = 128;
         public const int max_bits = 1023;

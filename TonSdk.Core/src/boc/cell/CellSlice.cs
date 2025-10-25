@@ -1,122 +1,135 @@
 ﻿using System;
 
-namespace TonSdk.Core.Boc {
+namespace TonSdk.Core.Boc
+{
+    public class CellSlice : BitsSliceImpl<CellSlice, Cell>
+    {
+        readonly Cell _cell;
+        readonly int _refs_en;
 
-    public class CellSlice : BitsSliceImpl<CellSlice, Cell> {
+        int _refs_st;
 
-        private void CheckRefsUnderflow(int refEnd) {
-            if (refEnd > _refs_en) {
-                throw new ArgumentException("CellSlice refs underflow");
-            }
-        }
-
-        private Cell _cell;
-
-        private int _refs_st = 0;
-        private int _refs_en;
-
-        public CellSlice(Cell cell) : base(cell.Bits) {
+        public CellSlice(Cell cell) : base(cell.Bits)
+        {
             _cell = cell;
             _refs_en = cell.RefsCount;
         }
 
         public CellSlice(Cell cell, int bits_st, int bits_en, int refs_st, int refs_en) : base(cell.Bits, bits_st,
-            bits_en) {
+            bits_en)
+        {
             _cell = cell;
             _refs_st = refs_st;
             _refs_en = refs_en;
         }
 
-        public int RemainderRefs {
-            get { return _refs_en - _refs_st; }
+        public int RemainderRefs => _refs_en - _refs_st;
+
+        public Cell[] Refs => _cell.Refs.slice(_refs_st, _refs_en);
+
+        void CheckRefsUnderflow(int refEnd)
+        {
+            if (refEnd > _refs_en) throw new ArgumentException("CellSlice refs underflow");
         }
 
-        public Cell[] Refs {
-            get { return _cell.Refs.slice(_refs_st, _refs_en); }
-        }
-
-        public CellSlice SkipRefs(int size) {
-            var refEnd = _refs_st + size;
+        public CellSlice SkipRefs(int size)
+        {
+            int refEnd = _refs_st + size;
             CheckRefsUnderflow(refEnd);
             _refs_st = refEnd;
             return this;
         }
 
-        public Cell[] ReadRefs(int size) {
-            var refEnd = _refs_st + size;
+        public Cell[] ReadRefs(int size)
+        {
+            int refEnd = _refs_st + size;
             CheckRefsUnderflow(refEnd);
             return _cell.Refs.slice(_refs_st, refEnd);
         }
 
-        public Cell[] LoadRefs(int size) {
-            var refEnd = _refs_st + size;
+        public Cell[] LoadRefs(int size)
+        {
+            int refEnd = _refs_st + size;
             CheckRefsUnderflow(refEnd);
-            var refs = _cell.Refs.slice(_refs_st, refEnd);
+            Cell[] refs = _cell.Refs.slice(_refs_st, refEnd);
             _refs_st = refEnd;
             return refs;
         }
 
-        public CellSlice SkipRef() {
+        public CellSlice SkipRef()
+        {
             return SkipRefs(1);
         }
 
-        public Cell ReadRef() {
-            var refEnd = _refs_st + 1;
+        public Cell ReadRef()
+        {
+            int refEnd = _refs_st + 1;
             CheckRefsUnderflow(refEnd);
             return _cell.Refs[_refs_st];
         }
 
-        public Cell LoadRef() {
-            var refEnd = _refs_st + 1;
+        public Cell LoadRef()
+        {
+            int refEnd = _refs_st + 1;
             CheckRefsUnderflow(refEnd);
-            var _ref = _cell.Refs[_refs_st];
+            Cell _ref = _cell.Refs[_refs_st];
             _refs_st = refEnd;
             return _ref;
         }
 
-        public CellSlice SkipOptRef() {
-            var optRef = ReadOptRef();
+        public CellSlice SkipOptRef()
+        {
+            Cell? optRef = ReadOptRef();
 
-            if (optRef != null) {
+            if (optRef != null)
+            {
                 SkipBit();
                 SkipRef();
             }
-            else {
+            else
+            {
                 SkipBit();
             }
 
             return this;
         }
 
-        public Cell? ReadOptRef() {
-            var opt = ReadBit();
+        public Cell? ReadOptRef()
+        {
+            bool opt = ReadBit();
             return opt ? ReadRef() : null;
         }
 
-        public Cell? LoadOptRef() {
-            var optRef = ReadOptRef();
+        public Cell? LoadOptRef()
+        {
+            Cell? optRef = ReadOptRef();
             SkipBit();
             if (optRef != null) SkipRef();
             return optRef;
         }
 
-        public HashmapE<K, V> ReadDict<K, V>(HashmapOptions<K, V> opt) {
+        public HashmapE<K, V> ReadDict<K, V>(HashmapOptions<K, V> opt)
+        {
             return HashmapE<K, V>.Deserialize(this, opt, false);
         }
 
-        public HashmapE<K, V> LoadDict<K, V>(HashmapOptions<K, V> opt) {
+        public HashmapE<K, V> LoadDict<K, V>(HashmapOptions<K, V> opt)
+        {
             return HashmapE<K, V>.Deserialize(this, opt);
         }
 
-        public Cell RestoreRemainder() {
+        public Cell RestoreRemainder()
+        {
             return new Cell(Bits, Refs);
         }
 
-        public override Cell Restore() {
+        public override Cell Restore()
+        {
             return _cell;
         }
 
-        public CellSlice Clone() {
+        public CellSlice Clone()
+        {
             return new CellSlice(_cell, _bits_st, _bits_en, _refs_st, _refs_en);
         }
     }

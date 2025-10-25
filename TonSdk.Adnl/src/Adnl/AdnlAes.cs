@@ -3,51 +3,48 @@ using System.Security.Cryptography;
 
 namespace TonSdk.Adnl
 {
-
     public class AesCounter
     {
-        private readonly byte[] _counter;
-
         public AesCounter(byte[] initialValue)
         {
             if (initialValue.Length != 16)
                 throw new ArgumentException("Invalid counter bytes size (must be 16 bytes)");
-            _counter = initialValue;
+            Counter = initialValue;
         }
 
         public AesCounter(int initialValue)
         {
-            _counter = new byte[16];
+            Counter = new byte[16];
             for (int i = 15; i >= 0; i--)
             {
-                _counter[i] = (byte)(initialValue % 256);
+                Counter[i] = (byte)(initialValue % 256);
                 initialValue /= 256;
             }
         }
 
+        public byte[] Counter { get; }
+
         public void Increment()
         {
             for (int i = 15; i >= 0; i--)
-            {
-                if (_counter[i] == 255)
-                    _counter[i] = 0;
+                if (Counter[i] == 255)
+                {
+                    Counter[i] = 0;
+                }
                 else
                 {
-                    _counter[i]++;
+                    Counter[i]++;
                     break;
                 }
-            }
         }
-
-        public byte[] Counter => _counter;
     }
 
     public class AesCtrMode
     {
-        private AesCounter _counter;
-        private byte[] _remainingCounter;
-        private int _remainingCounterIndex;
-        private Aes _aes;
+        readonly Aes _aes;
+        readonly AesCounter _counter;
+        byte[] _remainingCounter;
+        int _remainingCounterIndex;
 
         public AesCtrMode(byte[] key, AesCounter? counter)
         {
@@ -80,12 +77,15 @@ namespace TonSdk.Adnl
             return encrypted;
         }
 
-        private byte[] EncryptCounter(byte[] counter)
+        byte[] EncryptCounter(byte[] counter)
         {
-            using var encryptor = _aes.CreateEncryptor();
+            using ICryptoTransform encryptor = _aes.CreateEncryptor();
             return encryptor.TransformFinalBlock(counter, 0, counter.Length);
         }
 
-        public byte[] Decrypt(byte[] ciphertext) => Encrypt(ciphertext);
+        public byte[] Decrypt(byte[] ciphertext)
+        {
+            return Encrypt(ciphertext);
+        }
     }
 }

@@ -4,7 +4,7 @@ namespace TonSdk.Adnl
 {
     internal class Cipher
     {
-        private readonly AesCtrMode _cipher;
+        readonly AesCtrMode _cipher;
 
         internal Cipher(byte[] key, byte[] iv)
         {
@@ -17,12 +17,15 @@ namespace TonSdk.Adnl
             _cipher = new AesCtrMode(key, new AesCounter(iv));
         }
 
-        internal byte[] Update(byte[] data) => _cipher.Encrypt(data);
+        internal byte[] Update(byte[] data)
+        {
+            return _cipher.Encrypt(data);
+        }
     }
 
     internal class Decipher
     {
-        private readonly AesCtrMode _cipher;
+        readonly AesCtrMode _cipher;
 
         internal Decipher(byte[] key, byte[] iv)
         {
@@ -35,13 +38,22 @@ namespace TonSdk.Adnl
             _cipher = new AesCtrMode(key, new AesCounter(iv));
         }
 
-        internal byte[] Update(byte[] data) => _cipher.Decrypt(data);
+        internal byte[] Update(byte[] data)
+        {
+            return _cipher.Decrypt(data);
+        }
     }
 
     internal static class CipherFactory
     {
-        internal static Cipher CreateCipheriv(byte[] key, byte[] iv) => new Cipher(key, iv);
+        internal static Cipher CreateCipheriv(byte[] key, byte[] iv)
+        {
+            return new Cipher(key, iv);
+        }
 
-        internal static Decipher CreateDecipheriv(byte[] key, byte[] iv) => new Decipher(key, iv);
+        internal static Decipher CreateDecipheriv(byte[] key, byte[] iv)
+        {
+            return new Decipher(key, iv);
+        }
     }
 }

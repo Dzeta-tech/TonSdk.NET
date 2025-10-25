@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -16,25 +15,18 @@ namespace TonSdk.Adnl
 
     public class AdnlClientTcp
     {
-        private TcpClient _socket;
-        private NetworkStream _networkStream;
-        private string _host;
-        private int _port;
+        readonly AdnlAddress _address;
+        readonly string _host;
+        readonly int _port;
+        readonly TcpClient _socket;
 
         // private List<byte> _buffer;
-        private byte[] _buffer;
-        private AdnlAddress _address;
-        private AdnlKeys _keys;
-        private AdnlAesParams _params;
-        private AdnlClientState _state = AdnlClientState.Closed;
-        private Cipher _cipher;
-        private Decipher _decipher;
-
-        public event Action Connected;
-        public event Action Ready;
-        public event Action Closed;
-        public event Action<byte[]> DataReceived;
-        public event Action<Exception> ErrorOccurred;
+        byte[] _buffer;
+        Cipher _cipher;
+        Decipher _decipher;
+        AdnlKeys _keys;
+        NetworkStream _networkStream;
+        AdnlAesParams _params;
 
         public AdnlClientTcp(int host, int port, byte[] peerPublicKey)
         {
@@ -42,7 +34,7 @@ namespace TonSdk.Adnl
             _port = port;
             _address = new AdnlAddress(peerPublicKey);
             _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024; 
+            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
             _socket.SendBufferSize = 1 * 1024 * 1024;
         }
 
@@ -52,17 +44,17 @@ namespace TonSdk.Adnl
             _port = port;
             _address = new AdnlAddress(peerPublicKey);
             _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024; 
+            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
             _socket.SendBufferSize = 1 * 1024 * 1024;
         }
-        
+
         public AdnlClientTcp(string host, int port, byte[] peerPublicKey)
         {
             _host = host;
             _port = port;
             _address = new AdnlAddress(peerPublicKey);
             _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024; 
+            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
             _socket.SendBufferSize = 1 * 1024 * 1024;
         }
 
@@ -72,11 +64,19 @@ namespace TonSdk.Adnl
             _port = port;
             _address = new AdnlAddress(peerPublicKey);
             _socket = new TcpClient();
-            _socket.ReceiveBufferSize = 1 * 1024 * 1024; 
+            _socket.ReceiveBufferSize = 1 * 1024 * 1024;
             _socket.SendBufferSize = 1 * 1024 * 1024;
         }
 
-        private async Task Handshake()
+        public AdnlClientState State { get; private set; } = AdnlClientState.Closed;
+
+        public event Action Connected;
+        public event Action Ready;
+        public event Action Closed;
+        public event Action<byte[]> DataReceived;
+        public event Action<Exception> ErrorOccurred;
+
+        async Task Handshake()
         {
             byte[] key = _keys.Shared.Take(16).Concat(_params.Hash.Skip(16).Take(16)).ToArray();
             byte[] nonce = _params.Hash.Take(4).Concat(_keys.Shared.Skip(20).Take(12)).ToArray();
@@ -89,9 +89,9 @@ namespace TonSdk.Adnl
             await _networkStream.WriteAsync(packet, 0, packet.Length).ConfigureAwait(false);
         }
 
-        private void OnBeforeConnect()
+        void OnBeforeConnect()
         {
-            if (_state != AdnlClientState.Closed) return;
+            if (State != AdnlClientState.Closed) return;
             AdnlKeys keys = new AdnlKeys(_address.PublicKey);
 
             _keys = keys;
@@ -99,10 +99,10 @@ namespace TonSdk.Adnl
             _cipher = CipherFactory.CreateCipheriv(_params.TxKey, _params.TxNonce);
             _decipher = CipherFactory.CreateDecipheriv(_params.RxKey, _params.RxNonce);
             _buffer = Array.Empty<byte>();
-            _state = AdnlClientState.Connecting;
+            State = AdnlClientState.Connecting;
         }
 
-        private async Task ReadDataAsync()
+        async Task ReadDataAsync()
         {
             try
             {
@@ -118,7 +118,10 @@ namespace TonSdk.Adnl
 
                         OnDataReceived(receivedData);
                     }
-                    else if (bytesRead == 0) break;
+                    else if (bytesRead == 0)
+                    {
+                        break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -131,19 +134,19 @@ namespace TonSdk.Adnl
             }
         }
 
-        private void OnReady()
+        void OnReady()
         {
-            _state = AdnlClientState.Open;
+            State = AdnlClientState.Open;
             Ready?.Invoke();
         }
 
-        private void OnClose()
+        void OnClose()
         {
-            _state = AdnlClientState.Closed;
+            State = AdnlClientState.Closed;
             Closed?.Invoke();
         }
 
-        private void OnDataReceived(byte[] data)
+        void OnDataReceived(byte[] data)
         {
             _buffer = _buffer.Concat(Decrypt(data)).ToArray();
             while (_buffer.Length >= AdnlPacket.PacketMinSize)
@@ -153,15 +156,18 @@ namespace TonSdk.Adnl
 
                 _buffer = _buffer.Skip(packet.Length).ToArray();
 
-                if (_state == AdnlClientState.Connecting)
+                if (State == AdnlClientState.Connecting)
                 {
                     if (packet.Payload.Length != 0)
                     {
                         ErrorOccurred?.Invoke(new Exception("AdnlClient: Bad handshake."));
                         End();
-                        _state = AdnlClientState.Closed;
+                        State = AdnlClientState.Closed;
                     }
-                    else OnReady();
+                    else
+                    {
+                        OnReady();
+                    }
 
                     break;
                 }
@@ -169,8 +175,6 @@ namespace TonSdk.Adnl
                 DataReceived?.Invoke(packet.Payload);
             }
         }
-
-        public AdnlClientState State => _state;
 
         public async Task Connect()
         {
@@ -187,13 +191,13 @@ namespace TonSdk.Adnl
             {
                 ErrorOccurred?.Invoke(e);
                 End();
-                _state = AdnlClientState.Closed;
+                State = AdnlClientState.Closed;
             }
         }
 
         public void End()
         {
-            if (_state == AdnlClientState.Closed || _state == AdnlClientState.Closing) return;
+            if (State == AdnlClientState.Closed || State == AdnlClientState.Closing) return;
             _socket.Close();
             OnClose();
         }
@@ -205,10 +209,17 @@ namespace TonSdk.Adnl
             await _networkStream.WriteAsync(encrypted, 0, encrypted.Length).ConfigureAwait(false);
         }
 
-        private byte[] Encrypt(byte[] data) => _cipher.Update(data);
-        private byte[] Decrypt(byte[] data) => _decipher.Update(data);
-        
-        private static string ConvertToIPAddress(int number)
+        byte[] Encrypt(byte[] data)
+        {
+            return _cipher.Update(data);
+        }
+
+        byte[] Decrypt(byte[] data)
+        {
+            return _decipher.Update(data);
+        }
+
+        static string ConvertToIPAddress(int number)
         {
             uint unsignedNumber = (uint)number;
             byte[] bytes = new byte[4];

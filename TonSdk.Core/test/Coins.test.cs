@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TonSdk.Core.Tests;
+﻿namespace TonSdk.Core.Tests;
 
 public class CoinsTest
 {
@@ -37,8 +35,8 @@ public class CoinsTest
     [Test]
     public void Test_NanoToCoinsEqual()
     {
-        Assert.That(new Coins("20.555").Eq(new Coins(20_555_000_000, new CoinsOptions(true, 9))), Is.EqualTo(true));
-        Assert.That(new Coins("10").Eq(new Coins(10_000_000_000, new CoinsOptions(true, 9))), Is.EqualTo(true));
+        Assert.That(new Coins("20.555").Eq(new Coins(20_555_000_000, new CoinsOptions(true))), Is.EqualTo(true));
+        Assert.That(new Coins("10").Eq(new Coins(10_000_000_000, new CoinsOptions(true))), Is.EqualTo(true));
     }
 
     [Test]
@@ -69,9 +67,9 @@ public class CoinsTest
         Assert.That(new Coins("10").IsPositive, Is.EqualTo(true));
         Assert.That(new Coins(0).IsZero, Is.EqualTo(true));
         Assert.DoesNotThrow(() => new Coins(10).ToBigInt());
-        var d1 = new Coins("10,641462085").ToDecimal();
-        var d2=decimal.Parse("10,641462085");
-        Assert.That(new Coins("10,641462085").ToDecimal() ,Is.EqualTo(decimal.Parse("10,641462085")));
+        decimal d1 = new Coins("10,641462085").ToDecimal();
+        decimal d2 = decimal.Parse("10,641462085");
+        Assert.That(new Coins("10,641462085").ToDecimal(), Is.EqualTo(decimal.Parse("10,641462085")));
     }
 
     [Test]
@@ -154,7 +152,7 @@ public class CoinsTest
     {
         Assert.DoesNotThrow(() =>
         {
-            var coins = new Coins(0.00000001);
+            Coins coins = new(0.00000001);
         });
     }
 }

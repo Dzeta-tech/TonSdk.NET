@@ -1,23 +1,28 @@
 # Dzeta.TonSdk.NET
 
-> **Note**: This is a fork of [TonSdk.NET](https://github.com/continuation-team/TonSdk.NET) with critical bug fixes and improvements.
+> **Note**: This is a fork of [TonSdk.NET](https://github.com/continuation-team/TonSdk.NET) with critical bug fixes and
+> improvements.
 >
 > **Key changes**:
-> - **Thread-safety fixes**: Replaced `Dictionary` with `ConcurrentDictionary` in LiteClient for concurrent request handling
+> - **Thread-safety fixes**: Replaced `Dictionary` with `ConcurrentDictionary` in LiteClient for concurrent request
+    handling
 > - **Bounds checking**: Added BOC deserialization safety checks to prevent "Index out of range" errors
 > - **Address struct**: Rewritten `Address` as a high-performance `struct` using `fixed byte` and `ReadOnlySpan<byte>`
 > - **EF Core integration**: New extension package for Entity Framework Core value converters
 > - **Atomic operations**: Proper use of `TryAdd`/`TryRemove` for thread-safe request management
 >
-> **Status**: Currently only Core, Adnl, and EntityFrameworkCore packages are published. Other packages (Client, Contracts, Connect, DeFi) will be added incrementally with improvements.
+> **Status**: Currently only Core, Adnl, and EntityFrameworkCore packages are published. Other packages (Client,
+> Contracts, Connect, DeFi) will be added incrementally with improvements.
 
 ## Packages
 
 ### [Dzeta.TonSdk.Core](https://www.nuget.org/packages/Dzeta.TonSdk.Core/)
+
 [![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Core.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Core)
 [![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Core.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Core)
 
 Core library with types and structures for TON Blockchain. Includes:
+
 - `Address` as high-performance `struct` with `fixed byte` hash storage
 - `Coins` for TON, Jetton amounts
 - BOC serialization/deserialization with bounds checking
@@ -30,10 +35,12 @@ dotnet add package Dzeta.TonSdk.Core
 ```
 
 ### [Dzeta.TonSdk.Adnl](https://www.nuget.org/packages/Dzeta.TonSdk.Adnl/)
+
 [![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Adnl.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Adnl)
 [![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Adnl.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Adnl)
 
 Thread-safe ADNL client and LiteClient for interacting with TON blockchain nodes. Includes:
+
 - ADNL protocol implementation
 - LiteClient with concurrent request handling (`ConcurrentDictionary`)
 - Atomic operations for safe multi-threaded access
@@ -44,10 +51,12 @@ dotnet add package Dzeta.TonSdk.Adnl
 ```
 
 ### [Dzeta.TonSdk.Core.EntityFrameworkCore](https://www.nuget.org/packages/Dzeta.TonSdk.Core.EntityFrameworkCore/)
+
 [![NuGet](https://img.shields.io/nuget/dt/Dzeta.TonSdk.Core.EntityFrameworkCore.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Core.EntityFrameworkCore)
 [![NuGet](https://img.shields.io/nuget/vpre/Dzeta.TonSdk.Core.EntityFrameworkCore.svg)](https://www.nuget.org/packages/Dzeta.TonSdk.Core.EntityFrameworkCore)
 
 Entity Framework Core integration for TonSdk.Core types. Includes:
+
 - `AddressValueConverter` - stores Address as 36 bytes (4 bytes workchain + 32 bytes hash)
 - `AddressStringValueConverter` - stores Address as human-readable string (~80 bytes)
 - Extension methods for easy configuration
@@ -57,6 +66,7 @@ dotnet add package Dzeta.TonSdk.Core.EntityFrameworkCore
 ```
 
 **Usage example:**
+
 ```csharp
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {

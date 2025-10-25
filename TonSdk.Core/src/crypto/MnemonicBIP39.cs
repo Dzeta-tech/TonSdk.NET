@@ -1,31 +1,32 @@
 ﻿using System;
 using System.Linq;
 
-namespace TonSdk.Core.Crypto {
-    public class MnemonicOptions {
-        public string Salt { get; set; }
-        public int Rounds { get; set; }
-        public int KeyLength { get; set; }
-
-        public MnemonicOptions(string salt, int rounds, int keyLength) {
+namespace TonSdk.Core.Crypto
+{
+    public class MnemonicOptions
+    {
+        public MnemonicOptions(string salt, int rounds, int keyLength)
+        {
             Salt = salt;
             Rounds = rounds;
             KeyLength = keyLength;
         }
+
+        public string Salt { get; set; }
+        public int Rounds { get; set; }
+        public int KeyLength { get; set; }
     }
 
-    public class MnemonicBIP39 {
-        private string[]? _words { get; set; }
-        private byte[]? _seed { get; set; }
-        private KeyPair? _keys { get; set; }
-
+    public class MnemonicBIP39
+    {
         /// <summary>
-        /// Initializes a new instance of the MnemonicBIP39 class.
+        ///     Initializes a new instance of the MnemonicBIP39 class.
         /// </summary>
         /// <param name="mnemonic">An optional array of mnemonic words.</param>
         /// <param name="options">An optional MnemonicOptions object specifying custom options.</param>
         /// <exception cref="Exception">Thrown when the provided mnemonic is invalid.</exception>
-        public MnemonicBIP39(string[]? mnemonic = null, MnemonicOptions? options = null) {
+        public MnemonicBIP39(string[]? mnemonic = null, MnemonicOptions? options = null)
+        {
             if (mnemonic != null && mnemonic.Length != 24)
                 throw new Exception("Mnemonic: must contain 24 bip39 words.");
             if (mnemonic != null && !mnemonic.All(word => MnemonicWords.Bip0039En.Contains(word)))
@@ -36,7 +37,8 @@ namespace TonSdk.Core.Crypto {
             int rounds = 2048;
             int keyLength = 64;
 
-            if (options != null) {
+            if (options != null)
+            {
                 salt = options?.Salt != null ? options.Salt : "";
                 rounds = options?.Rounds != null ? options.Rounds : 2048;
                 keyLength = options?.KeyLength != null ? options.KeyLength : 64;
@@ -51,38 +53,43 @@ namespace TonSdk.Core.Crypto {
             _keys = keys;
         }
 
-        public string[]? Words {
-            get { return _words; }
-        }
+        string[]? _words { get; }
+        byte[]? _seed { get; }
+        KeyPair? _keys { get; }
 
-        public byte[]? Seed {
-            get { return _seed; }
-        }
+        public string[]? Words => _words;
 
-        public KeyPair? Keys {
-            get { return _keys; }
-        }
+        public byte[]? Seed => _seed;
+
+        public KeyPair? Keys => _keys;
 
         /// <summary>
-        /// Generates an array of random mnemonic words.
+        ///     Generates an array of random mnemonic words.
         /// </summary>
         /// <returns>An array of mnemonic words.</returns>
-        public static string[] GenerateWords() => Utils.GenerateWords();
+        public static string[] GenerateWords()
+        {
+            return Utils.GenerateWords();
+        }
 
         /// <summary>
-        /// Generates a key pair from the provided seed.
+        ///     Generates a key pair from the provided seed.
         /// </summary>
         /// <param name="seed">The seed used for key pair generation.</param>
         /// <returns>A KeyPair object containing the public and private keys.</returns>
-        public static KeyPair GenerateKeyPair(byte[] seed) => Utils.GenerateKeyPair(seed);
+        public static KeyPair GenerateKeyPair(byte[] seed)
+        {
+            return Utils.GenerateKeyPair(seed);
+        }
 
         /// <summary>
-        /// Generates a seed byte array from the provided mnemonic words.
+        ///     Generates a seed byte array from the provided mnemonic words.
         /// </summary>
         /// <param name="mnemonic">The mnemonic words.</param>
         /// <returns>The generated seed byte array.</returns>
         public static byte[] GenerateSeed(string[] mnemonic, string? salt = null, int rounds = 2048,
-            int keyLength = 64) {
+            int keyLength = 64)
+        {
             if (mnemonic != null && mnemonic.Length != 24)
                 throw new Exception("Mnemonic: must contain 24 bip39 words.");
             if (mnemonic != null && !mnemonic.All(word => MnemonicWords.Bip0039En.Contains(word)))
@@ -93,7 +100,8 @@ namespace TonSdk.Core.Crypto {
             return seed;
         }
 
-        protected string GenerateSalt(string? salt = null) {
+        protected string GenerateSalt(string? salt = null)
+        {
             return "mnemonic" + (salt != null ? Utils.Normalize(salt) : "");
         }
     }

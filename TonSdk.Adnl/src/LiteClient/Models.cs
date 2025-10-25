@@ -6,12 +6,6 @@ namespace TonSdk.Adnl.LiteClient
 {
     public class BlockIdExtended
     {
-        public int Workchain { get; set; }
-        public long Shard { get; set; }
-        public int Seqno { get; set; }
-        public byte[] RootHash { get; set; }
-        public byte[] FileHash { get; set; }
-
         public BlockIdExtended(int workchain, byte[] rootHash, byte[] fileHash, long shard, int seqno)
         {
             Workchain = workchain;
@@ -29,20 +23,26 @@ namespace TonSdk.Adnl.LiteClient
             RootHash = Array.Empty<byte>();
             FileHash = Array.Empty<byte>();
         }
+
+        public int Workchain { get; set; }
+        public long Shard { get; set; }
+        public int Seqno { get; set; }
+        public byte[] RootHash { get; set; }
+        public byte[] FileHash { get; set; }
     }
 
     public class MasterChainInfo
     {
-        public BlockIdExtended LastBlockId { get; set; }
-        public BlockIdExtended InitBlockId { get; set; }
-        public BigInteger StateRootHash { get; set; }
-
         public MasterChainInfo(BlockIdExtended lastBlockId, BlockIdExtended initBlockId, BigInteger stateRootHash)
         {
             LastBlockId = lastBlockId;
             InitBlockId = initBlockId;
             StateRootHash = stateRootHash;
         }
+
+        public BlockIdExtended LastBlockId { get; set; }
+        public BlockIdExtended InitBlockId { get; set; }
+        public BigInteger StateRootHash { get; set; }
     }
 
     public class BlockHeader
@@ -50,32 +50,25 @@ namespace TonSdk.Adnl.LiteClient
         public BlockIdExtended BlockId { get; set; }
         public byte[] HeaderProof { get; set; }
     }
-    
+
     public class ChainVersion
     {
-        public int Version { get; set; }
-        public long Capabilities { get; set; }
-        public int Now { get; set; }
-
         public ChainVersion(int version, long capabilities, int now)
         {
             Version = version;
             Capabilities = capabilities;
             Now = now;
         }
-    }
-    
-    public class MasterChainInfoExtended
-    {
+
         public int Version { get; set; }
         public long Capabilities { get; set; }
-        public int LastUTime { get; set; }
         public int Now { get; set; }
-        public BlockIdExtended LastBlockId { get; set; }
-        public BlockIdExtended InitBlockId { get; set; }
-        public BigInteger StateRootHash { get; set; }
+    }
 
-        public MasterChainInfoExtended(int version, long capabilities, int lastUTime, int now, BlockIdExtended lastBlockId, BlockIdExtended initBlockId, BigInteger stateRootHash)
+    public class MasterChainInfoExtended
+    {
+        public MasterChainInfoExtended(int version, long capabilities, int lastUTime, int now,
+            BlockIdExtended lastBlockId, BlockIdExtended initBlockId, BigInteger stateRootHash)
         {
             Version = version;
             Capabilities = capabilities;
@@ -85,24 +78,24 @@ namespace TonSdk.Adnl.LiteClient
             InitBlockId = initBlockId;
             StateRootHash = stateRootHash;
         }
+
+        public int Version { get; set; }
+        public long Capabilities { get; set; }
+        public int LastUTime { get; set; }
+        public int Now { get; set; }
+        public BlockIdExtended LastBlockId { get; set; }
+        public BlockIdExtended InitBlockId { get; set; }
+        public BigInteger StateRootHash { get; set; }
     }
 
     public class AccountState
     {
-        
     }
 
     public class RunSmcMethodResult
     {
-        public byte[] ShardProof { get; set; }
-        public byte[] Proof { get; set; }
-        public byte[] StateProof { get; set; }
-        public byte[] InitC7 { get; set; }
-        public byte[] LibExtras { get; set; }
-        public int ExitCode { get; set; }
-        public byte[] Result { get; set; }
-
-        public RunSmcMethodResult(byte[] shardProof, byte[] proof, byte[] stateProof, byte[] initC7, byte[] libExtras, int exitCode, byte[] result)
+        public RunSmcMethodResult(byte[] shardProof, byte[] proof, byte[] stateProof, byte[] initC7, byte[] libExtras,
+            int exitCode, byte[] result)
         {
             ShardProof = shardProof;
             Proof = proof;
@@ -112,72 +105,81 @@ namespace TonSdk.Adnl.LiteClient
             ExitCode = exitCode;
             Result = result;
         }
+
+        public byte[] ShardProof { get; set; }
+        public byte[] Proof { get; set; }
+        public byte[] StateProof { get; set; }
+        public byte[] InitC7 { get; set; }
+        public byte[] LibExtras { get; set; }
+        public int ExitCode { get; set; }
+        public byte[] Result { get; set; }
     }
-    
-    public interface ITransactionId {}
+
+    public interface ITransactionId
+    {
+    }
 
     public class TransactionId : ITransactionId
     {
         public byte[] Account { get; set; }
         public long Lt { get; set; }
-        
+
         public byte[] Hash { get; set; }
-        
     }
-    
-    
+
+
     public class TransactionId3 : ITransactionId
     {
-        public Address Account { get; set; }
-        public long Lt { get; set; }
-
         public TransactionId3(Address account, long lt)
         {
             Account = account;
             Lt = lt;
         }
+
+        public Address Account { get; set; }
+        public long Lt { get; set; }
     }
-    
+
     public class ListBlockTransactionsExtendedResult
     {
-        public bool InComplete { get; set; }
-        public byte[] Transactions { get; set; }
-        public byte[] Proof { get; set; }
-
         public ListBlockTransactionsExtendedResult(bool inComplete, byte[] transactions, byte[] proof)
         {
             InComplete = inComplete;
             Transactions = transactions;
             Proof = proof;
         }
+
+        public bool InComplete { get; set; }
+        public byte[] Transactions { get; set; }
+        public byte[] Proof { get; set; }
     }
 
     public class ListBlockTransactionsResult
     {
-        public bool InComplete { get; set; }
-        public TransactionId[] TransactionIds { get; set; }
-        public byte[] Proof { get; set; }
-
         public ListBlockTransactionsResult(bool inComplete, TransactionId[] transactionIds, byte[] proof)
         {
             InComplete = inComplete;
             TransactionIds = transactionIds;
             Proof = proof;
         }
+
+        public bool InComplete { get; set; }
+        public TransactionId[] TransactionIds { get; set; }
+        public byte[] Proof { get; set; }
     }
-    
+
     [Flags]
     internal enum RunSmcModes
     {
         None = 0,
         ShardProof = 1 << 0, // mode.0
-        Proof = 1 << 0,      // mode.0
+        Proof = 1 << 0, // mode.0
         StateProof = 1 << 1, // mode.1
-        InitC7 = 1 << 3,     // mode.3
-        LibExtras = 1 << 4,  // mode.4
-        Result = 1 << 2      // mode.2
+        InitC7 = 1 << 3, // mode.3
+        LibExtras = 1 << 4, // mode.4
+        Result = 1 << 2 // mode.2
     }
-    
+
     public class RunSmcOptions
     {
         public bool ShardProof { get; set; }
@@ -190,41 +192,41 @@ namespace TonSdk.Adnl.LiteClient
 
     public class ShardInfo
     {
-        public byte[] ShardProof { get; set; }
-        public byte[] ShardDescr { get; set; }
-        
-        public BlockIdExtended ShardBlock { get; set; }
-
         public ShardInfo(byte[] shardProof, byte[] shardDescr, BlockIdExtended shardBlock)
         {
             ShardBlock = shardBlock;
             ShardProof = shardProof;
             ShardDescr = shardDescr;
         }
+
+        public byte[] ShardProof { get; set; }
+        public byte[] ShardDescr { get; set; }
+
+        public BlockIdExtended ShardBlock { get; set; }
     }
-    
+
     public class AllShardsInfo
     {
-        public byte[] Data { get; set; }
-
-        public AllShardsInfo( byte[] data)
+        public AllShardsInfo(byte[] data)
         {
             Data = data;
         }
+
+        public byte[] Data { get; set; }
     }
 
     public class BlockId
     {
-        public int Workchain { get; set; }
-        public long Shard { get; set; }
-        public long Seqno { get; set; }
-
         public BlockId(int workchain, long shard, long seqno)
         {
             Workchain = workchain;
             Shard = shard;
             Seqno = seqno;
         }
+
+        public int Workchain { get; set; }
+        public long Shard { get; set; }
+        public long Seqno { get; set; }
     }
 
     public class Signature
@@ -232,8 +234,10 @@ namespace TonSdk.Adnl.LiteClient
         public BigInteger NodeIdShort { get; set; }
         public byte[] SignatureBytes { get; set; }
     }
-    
-    public interface IBlockLink {}
+
+    public interface IBlockLink
+    {
+    }
 
     public class BlockLinkBack : IBlockLink
     {
@@ -244,7 +248,7 @@ namespace TonSdk.Adnl.LiteClient
         public byte[] Proof { get; set; }
         public byte[] StateProof { get; set; }
     }
-    
+
     public class BlockLinkForward : IBlockLink
     {
         public bool ToKeyBlock { get; set; }
@@ -288,7 +292,7 @@ namespace TonSdk.Adnl.LiteClient
         public BlockIdExtended MasterChainId { get; set; }
         public ShardBlockLink[] Links { get; set; }
     }
-    
+
     public class AccountStateResult
     {
         public byte[] ShardProof { get; set; }

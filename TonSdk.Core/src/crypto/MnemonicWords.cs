@@ -1,6 +1,9 @@
-﻿namespace TonSdk.Core.Crypto {
-    public static class MnemonicWords {
-        public static readonly string[] Bip0039En = {
+﻿namespace TonSdk.Core.Crypto
+{
+    public static class MnemonicWords
+    {
+        public static readonly string[] Bip0039En =
+        {
             "abandon",
             "ability",
             "able",

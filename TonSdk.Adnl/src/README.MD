@@ -1,6 +1,5 @@
 ﻿## TonSdk.Adnl
 
-
 ### Overview example
 
 ```csharp
@@ -55,6 +54,7 @@ private static void OnErrorOccured(Exception ex)
 ```
 
 #### Write byte data method
+
 ```csharp
 // Write byte array via NetworkStream. Should be predefined by using TL Schemes 
 // TL docs: https://core.telegram.org/mtproto/TL or https://docs.ton.org/develop/data-formats/tl
@@ -62,6 +62,7 @@ await client.Write(byte[] data);
 ```
 
 #### End connection method
+
 ```csharp
 // Close and Dispose connection to Liteserver
 client.End();

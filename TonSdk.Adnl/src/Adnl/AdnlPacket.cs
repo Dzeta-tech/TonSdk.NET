@@ -9,34 +9,31 @@ namespace TonSdk.Adnl
     {
         internal const byte PacketMinSize = 68; // 4 (size) + 32 (nonce) + 32 (hash)
 
-        private byte[] _payload;
-        private byte[] _nonce;
-
         internal AdnlPacket(byte[] payload, byte[]? nonce = null)
         {
-            _nonce = nonce ?? AdnlKeys.GenerateRandomBytes(32);
-            _payload = payload;
+            Nonce = nonce ?? AdnlKeys.GenerateRandomBytes(32);
+            Payload = payload;
         }
 
-        internal byte[] Payload => _payload;
+        internal byte[] Payload { get; }
 
-        private byte[] Nonce => _nonce;
+        byte[] Nonce { get; }
 
-        private byte[] Hash
-        {
-            get 
-            { 
-                using SHA256 sha256 = SHA256.Create();
-                byte[] sha256Hash = sha256.ComputeHash(_nonce.Concat(_payload).ToArray());
-                return sha256Hash; 
-            }
-        }
-
-        private byte[] Size
+        byte[] Hash
         {
             get
             {
-                uint size = (uint)(32 + 32 + _payload.Length);
+                using SHA256 sha256 = SHA256.Create();
+                byte[] sha256Hash = sha256.ComputeHash(Nonce.Concat(Payload).ToArray());
+                return sha256Hash;
+            }
+        }
+
+        byte[] Size
+        {
+            get
+            {
+                uint size = (uint)(32 + 32 + Payload.Length);
                 Bits builder = new BitsBuilder().StoreUInt32LE(size).Build();
                 return builder.ToBytes();
             }
@@ -44,7 +41,7 @@ namespace TonSdk.Adnl
 
         internal byte[] Data => Size.Concat(Nonce).Concat(Payload).Concat(Hash).ToArray();
 
-        internal int Length => PacketMinSize + _payload.Length;
+        internal int Length => PacketMinSize + Payload.Length;
 
         internal static AdnlPacket? Parse(byte[] data)
         {
@@ -68,7 +65,7 @@ namespace TonSdk.Adnl
 
             byte[] hash = new byte[32];
             Array.Copy(data, cursor, hash, 0, 32);
-            
+
             using SHA256 sha256 = SHA256.Create();
             byte[] target = sha256.ComputeHash(nonce.Concat(payload).ToArray());
 
