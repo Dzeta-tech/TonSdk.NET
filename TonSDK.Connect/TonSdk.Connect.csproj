@@ -17,8 +17,8 @@
 	  <PackageReference Include="JustCRC32C" Version="1.1.0" />
 	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 	  <PackageReference Include="NaCl.Net" Version="0.1.13" />
-	  <PackageReference Include="Dzeta.TonSdk.Core" Version="0.3.10" />
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <ProjectReference Include="..\TonSdk.Core\src\TonSdk.Core.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

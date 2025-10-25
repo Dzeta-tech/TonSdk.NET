@@ -25,9 +25,9 @@
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Dzeta.TonSdk.Client" Version="0.3.12" />
-        <PackageReference Include="Dzeta.TonSdk.Contracts" Version="0.4.1" />
-        <PackageReference Include="Dzeta.TonSdk.Core" Version="0.3.10" />
+        <ProjectReference Include="..\TonSdk.Client\src\TonSdk.Client.csproj" />
+        <ProjectReference Include="..\TonSdk.Contracts\src\TonSdk.Contracts.csproj" />
+        <ProjectReference Include="..\TonSdk.Core\src\TonSdk.Core.csproj" />
     </ItemGroup>
 
 </Project>

@@ -14,7 +14,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dzeta.TonSdk.Core" Version="0.3.10" />
+        <ProjectReference Include="..\..\TonSdk.Core\src\TonSdk.Core.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

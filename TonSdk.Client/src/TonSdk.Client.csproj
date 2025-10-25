@@ -15,8 +15,8 @@
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Dzeta.TonSdk.Adnl" Version="0.2.5" />
-        <PackageReference Include="Dzeta.TonSdk.Core" Version="0.3.10" />
+        <ProjectReference Include="..\..\TonSdk.Adnl\src\TonSdk.Adnl.csproj" />
+        <ProjectReference Include="..\..\TonSdk.Core\src\TonSdk.Core.csproj" />
     </ItemGroup>
 
     <PropertyGroup>
