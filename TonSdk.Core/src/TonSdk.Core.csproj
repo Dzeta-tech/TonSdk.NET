@@ -8,7 +8,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <RootNamespace>TonSdk.Core</RootNamespace>
         <PackageId>Dzeta.TonSdk.Core</PackageId>
-        <Version>0.3.10</Version>
+        <Version>0.4.0</Version>
         <Authors>Dzeta Tech</Authors>
         <PackageDescription>Core library with types and structures for TON Blockchain (Thread-safe fork with bug fixes)</PackageDescription>
         <RepositoryUrl>https://github.com/Dzeta-tech/TonSdk.NET</RepositoryUrl>
