@@ -60,7 +60,9 @@ def parse_type(type_str: str) -> Tuple[str, bool]:
     if '.' in type_str:
         return to_pascal_case(type_str), is_optional
     
-    return type_map.get(type_str, to_pascal_case(type_str)), is_optional
+    # Handle result types (these might be union types)
+    cs_type = type_map.get(type_str, to_pascal_case(type_str))
+    return cs_type, is_optional
 
 def parse_field(field_str: str) -> Optional[TLField]:
     """Parse a single TL field"""
@@ -158,18 +160,35 @@ def parse_tl_line(line: str, is_function: bool = False) -> Optional[TLType]:
 
 def to_pascal_case(name: str) -> str:
     """Convert snake_case or lowerCamelCase to PascalCase"""
-    # Handle dots (e.g., liteServer.error -> LiteServerError, tonNode.blockId -> BlockId)
+    # Types that should keep their LiteServer prefix to avoid conflicts
+    keep_prefix_types = {'liteserver.version', 'liteserver.signature', 'liteserver.signatureset'}
+    
+    # Handle dots (e.g., liteServer.error -> Error, tonNode.blockId -> BlockId)
     if '.' in name:
         parts = name.split('.')
-        # For tonNode types, just use the type name without prefix
-        if parts[0] == 'tonNode':
-            name = parts[1]
+        # For tonNode and liteServer, strip only the first part (prefix)
+        # but keep any nested parts like liteServer.nonfinal.candidate -> NonfinalCandidate
+        if parts[0] in ('tonNode', 'liteServer'):
+            # Check if we should keep the prefix
+            if name.lower() in keep_prefix_types:
+                # Keep the liteServer prefix
+                result_parts = []
+                for part in parts:
+                    words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
+                    result_parts.extend(words)
+                return ''.join(w.capitalize() for w in result_parts)
+            else:
+                parts = parts[1:]  # Remove prefix
+                # Now join the remaining parts
+                result_parts = []
+                for part in parts:
+                    words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
+                    result_parts.extend(words)
+                return ''.join(w.capitalize() for w in result_parts)
         else:
-            # For liteServer types, capitalize each part separately
-            # liteServer -> LiteServer, error -> Error
+            # For other prefixes, capitalize each part
             result_parts = []
             for part in parts:
-                # Split each part by camelCase
                 words = re.findall(r'[A-Z]+(?=[A-Z][a-z]|\b)|[A-Z][a-z]+|[a-z]+|[0-9]+', part)
                 result_parts.extend(words)
             return ''.join(w.capitalize() for w in result_parts)
@@ -217,21 +236,38 @@ def generate_field_declaration(field: TLField) -> str:
     else:
         return f'public {cs_type} {prop_name} {{ get; set; }}'
 
-def generate_struct_or_class(tl_type: TLType, is_struct: bool = False) -> str:
+def generate_struct_or_class(tl_type: TLType, is_struct: bool = False, union_types: dict = None) -> str:
     """Generate C# struct or class for a TL type"""
     class_name = to_pascal_case(tl_type.name)
     keyword = 'struct' if is_struct else 'class'
     readonly = 'readonly ' if is_struct else ''
     
+    # Check if this type is part of a union (has a base class)
+    base_class = None
+    if not is_struct and union_types and tl_type.result_type and tl_type.result_type in union_types:
+        if len(union_types[tl_type.result_type]) > 1:
+            base_class = to_pascal_case(tl_type.result_type)
+    
     lines = []
     lines.append(f'/// <summary>')
     lines.append(f'/// {tl_type.name} = {tl_type.result_type}')
+    if base_class:
+        lines.append(f'/// Inherits from: {base_class}')
     lines.append(f'/// </summary>')
-    lines.append(f'public {readonly}{keyword} {class_name}')
+    
+    if base_class:
+        lines.append(f'public {keyword} {class_name} : {base_class}')
+    else:
+        lines.append(f'public {readonly}{keyword} {class_name}')
+    
     lines.append('{')
     
     if not is_struct:
-        lines.append(f'    public const uint Constructor = 0x{tl_type.constructor:08X};')
+        if base_class:
+            # Override abstract property
+            lines.append(f'    public override uint Constructor => 0x{tl_type.constructor:08X};')
+        else:
+            lines.append(f'    public const uint Constructor = 0x{tl_type.constructor:08X};')
         lines.append('')
     
     # Generate fields/properties
@@ -261,7 +297,10 @@ def generate_struct_or_class(tl_type: TLType, is_struct: bool = False) -> str:
     # Generate WriteTo method
     if tl_type.fields:
         lines.append('')
-        lines.append('    public void WriteTo(TLWriteBuffer writer)')
+        # Use override if inheriting from abstract base
+        write_modifier = 'override' if base_class else ''
+        write_modifier_str = f'public {write_modifier} void WriteTo(TLWriteBuffer writer)'.strip()
+        lines.append(f'    {write_modifier_str}')
         lines.append('    {')
         for field in tl_type.fields:
             prop_name = to_pascal_case(field.name)
@@ -444,6 +483,25 @@ def generate_csharp_code(types: List[TLType], functions: List[TLType]) -> str:
     lines.append('namespace TonSdk.Adnl.LiteClient')
     lines.append('{')
     
+    # Generate abstract base classes for union types
+    if union_types:
+        lines.append('    // ============================================================================')
+        lines.append('    // Abstract base classes for union types')
+        lines.append('    // ============================================================================')
+        lines.append('')
+        for result_type, implementations in union_types.items():
+            abstract_class_name = to_pascal_case(result_type)
+            lines.append(f'    /// <summary>')
+            lines.append(f'    /// Base class for {result_type}')
+            lines.append(f'    /// Implementations: {", ".join(to_pascal_case(t.name) for t in implementations)}')
+            lines.append(f'    /// </summary>')
+            lines.append(f'    public abstract class {abstract_class_name}')
+            lines.append('    {')
+            lines.append('        public abstract uint Constructor { get; }')
+            lines.append('        public abstract void WriteTo(TLWriteBuffer writer);')
+            lines.append('    }')
+            lines.append('')
+    
     # Generate basic types (as structs)
     basic_types = [t for t in types if t.name.startswith('tonNode.')]
     if basic_types:
@@ -452,7 +510,7 @@ def generate_csharp_code(types: List[TLType], functions: List[TLType]) -> str:
         lines.append('    // ============================================================================')
         lines.append('')
         for tl_type in basic_types:
-            for line in generate_struct_or_class(tl_type, is_struct=True).split('\n'):
+            for line in generate_struct_or_class(tl_type, is_struct=True, union_types=union_types).split('\n'):
                 lines.append('    ' + line if line else '')
             lines.append('')
     
@@ -464,7 +522,7 @@ def generate_csharp_code(types: List[TLType], functions: List[TLType]) -> str:
         lines.append('    // ============================================================================')
         lines.append('')
         for tl_type in lite_types:
-            for line in generate_struct_or_class(tl_type, is_struct=False).split('\n'):
+            for line in generate_struct_or_class(tl_type, is_struct=False, union_types=union_types).split('\n'):
                 lines.append('    ' + line if line else '')
             lines.append('')
     

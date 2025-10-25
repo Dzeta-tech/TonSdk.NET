@@ -8,22 +8,22 @@ namespace TonSdk.Adnl.LiteClient
     /// </summary>
     internal static class Decoder
     {
-        public static LiteServerMasterchainInfo DecodeMasterchainInfo(byte[] data)
+        public static MasterchainInfo DecodeMasterchainInfo(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerMasterchainInfo.ReadFrom(reader);
+            return MasterchainInfo.ReadFrom(reader);
         }
 
-        public static LiteServerMasterchainInfoExt DecodeMasterchainInfoExt(byte[] data)
+        public static MasterchainInfoExt DecodeMasterchainInfoExt(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerMasterchainInfoExt.ReadFrom(reader);
+            return MasterchainInfoExt.ReadFrom(reader);
         }
 
-        public static LiteServerCurrentTime DecodeTime(byte[] data)
+        public static CurrentTime DecodeTime(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerCurrentTime.ReadFrom(reader);
+            return CurrentTime.ReadFrom(reader);
         }
 
         public static LiteServerVersion DecodeVersion(byte[] data)
@@ -32,52 +32,52 @@ namespace TonSdk.Adnl.LiteClient
             return LiteServerVersion.ReadFrom(reader);
         }
 
-        public static LiteServerBlockData DecodeBlock(byte[] data)
+        public static BlockData DecodeBlock(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerBlockData.ReadFrom(reader);
+            return BlockData.ReadFrom(reader);
         }
 
-        public static LiteServerBlockHeader DecodeBlockHeader(byte[] data)
+        public static BlockHeader DecodeBlockHeader(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerBlockHeader.ReadFrom(reader);
+            return BlockHeader.ReadFrom(reader);
         }
 
-        public static LiteServerAllShardsInfo DecodeAllShardsInfo(byte[] data)
+        public static AllShardsInfo DecodeAllShardsInfo(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerAllShardsInfo.ReadFrom(reader);
+            return AllShardsInfo.ReadFrom(reader);
         }
 
-        public static LiteServerBlockTransactions DecodeBlockTransactions(byte[] data)
+        public static BlockTransactions DecodeBlockTransactions(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerBlockTransactions.ReadFrom(reader);
+            return BlockTransactions.ReadFrom(reader);
         }
 
-        public static LiteServerAccountState DecodeAccountState(byte[] data)
+        public static AccountState DecodeAccountState(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerAccountState.ReadFrom(reader);
+            return AccountState.ReadFrom(reader);
         }
 
-        public static LiteServerTransactionList DecodeTransactions(byte[] data)
+        public static TransactionList DecodeTransactions(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerTransactionList.ReadFrom(reader);
+            return TransactionList.ReadFrom(reader);
         }
 
-        public static LiteServerTransactionInfo DecodeTransactionInfo(byte[] data)
+        public static TransactionInfo DecodeTransactionInfo(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerTransactionInfo.ReadFrom(reader);
+            return TransactionInfo.ReadFrom(reader);
         }
 
-        public static LiteServerConfigInfo DecodeConfigInfo(byte[] data)
+        public static ConfigInfo DecodeConfigInfo(byte[] data)
         {
             var reader = new TLReadBuffer(data);
-            return LiteServerConfigInfo.ReadFrom(reader);
+            return ConfigInfo.ReadFrom(reader);
         }
     }
 }
