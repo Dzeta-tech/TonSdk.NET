@@ -31,10 +31,15 @@ def compute_crc32(text: str) -> int:
     """Compute CRC32 of TL schema line"""
     return zlib.crc32(text.encode('utf-8')) & 0xFFFFFFFF
 
-def parse_type(type_str: str) -> Tuple[str, bool]:
+def parse_type(type_str: str, field_name: str = '') -> Tuple[str, bool]:
     """Parse TL type string to C# type"""
     is_optional = type_str.startswith('?')
     type_str = type_str.lstrip('?').strip()
+    
+    # Check if this int256 represents an address
+    address_field_names = {'account', 'address', 'account_addr'}
+    if type_str == 'int256' and field_name.lower() in address_field_names:
+        return 'Address', is_optional
     
     type_map = {
         'int': 'int',
@@ -44,7 +49,7 @@ def parse_type(type_str: str) -> Tuple[str, bool]:
         'bytes': 'byte[]',
         'Bool': 'bool',
         'true': 'bool',
-        'int256': 'byte[]',  # 32 bytes
+        'int256': 'byte[]',  # 32 bytes (unless it's an address)
         'int128': 'byte[]',  # 16 bytes
         '#': 'uint',
     }
@@ -53,7 +58,7 @@ def parse_type(type_str: str) -> Tuple[str, bool]:
     vector_match = re.match(r'vector\s+(.+)', type_str, re.IGNORECASE)
     if vector_match:
         inner_type_str = vector_match.group(1).strip()
-        inner_type, _ = parse_type(inner_type_str)
+        inner_type, _ = parse_type(inner_type_str, field_name)
         return f'{inner_type}[]', is_optional
     
     # Handle custom types (convert to PascalCase)
@@ -78,7 +83,7 @@ def parse_field(field_str: str) -> Optional[TLField]:
         type_str = type_str.strip()
         if type_str.startswith('(') and type_str.endswith(')'):
             type_str = type_str[1:-1]
-        cs_type, _ = parse_type(type_str)
+        cs_type, _ = parse_type(type_str, name)
         return TLField(name=name, type=cs_type, is_optional=True, condition=condition)
     
     # Handle regular fields: name:type or name:(type)
@@ -89,7 +94,7 @@ def parse_field(field_str: str) -> Optional[TLField]:
         type_str = type_str.strip()
         if type_str.startswith('(') and type_str.endswith(')'):
             type_str = type_str[1:-1]
-        cs_type, is_optional = parse_type(type_str)
+        cs_type, is_optional = parse_type(type_str, name)
         return TLField(name=name, type=cs_type, is_optional=is_optional)
     
     return None
@@ -369,6 +374,12 @@ def generate_struct_or_class(tl_type: TLType, is_struct: bool = False, union_typ
 
 def get_write_method(cs_type: str, prop_name: str, field_name: str = '') -> str:
     """Get the appropriate TLWriteBuffer.Write* method call"""
+    # Handle Address type
+    if cs_type == 'Address':
+        return f'writer.WriteBytes({prop_name}.Hash.ToArray(), 32);'
+    if cs_type == 'Address?':
+        return f'writer.WriteBytes({prop_name}.Value.Hash.ToArray(), 32);'
+    
     type_map = {
         'int': f'writer.WriteInt32({prop_name});',
         'uint': f'writer.WriteUInt32({prop_name});',
@@ -402,6 +413,10 @@ def get_write_method(cs_type: str, prop_name: str, field_name: str = '') -> str:
 
 def get_read_method(cs_type: str, field_name: str = '') -> str:
     """Get the appropriate TLReadBuffer.Read* method call"""
+    # Handle Address type (account hash only, workchain determined from context)
+    if cs_type == 'Address':
+        return 'new Address(0, reader.ReadInt256())'  # Default to workchain 0
+    
     type_map = {
         'int': 'reader.ReadInt32()',
         'uint': 'reader.ReadUInt32()',
@@ -479,6 +494,7 @@ def generate_csharp_code(types: List[TLType], functions: List[TLType]) -> str:
     lines.append('')
     lines.append('using System;')
     lines.append('using TonSdk.Adnl.TL;')
+    lines.append('using TonSdk.Core;')
     lines.append('')
     lines.append('namespace TonSdk.Adnl.LiteClient')
     lines.append('{')

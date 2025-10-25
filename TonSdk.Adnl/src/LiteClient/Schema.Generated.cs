@@ -4,6 +4,7 @@
 
 using System;
 using TonSdk.Adnl.TL;
+using TonSdk.Core;
 
 namespace TonSdk.Adnl.LiteClient
 {
@@ -736,7 +737,7 @@ namespace TonSdk.Adnl.LiteClient
         public const uint Constructor = 0xE944EBD2;
 
         public uint Mode { get; set; }
-        public byte[] Account { get; set; } = Array.Empty<byte>();
+        public Address? Account { get; set; }
         public long? Lt { get; set; }
         public byte[] Hash { get; set; } = Array.Empty<byte>();
         public TransactionMetadata? Metadata { get; set; }
@@ -746,7 +747,7 @@ namespace TonSdk.Adnl.LiteClient
             writer.WriteUInt32(Mode);
             if ((Mode & (1u << 0)) != 0)
             {
-                writer.WriteBytes(Account, 32);
+                writer.WriteBytes(Account.Value.Hash.ToArray(), 32);
             }
             if ((Mode & (1u << 1)) != 0)
             {
@@ -767,7 +768,7 @@ namespace TonSdk.Adnl.LiteClient
             var result = new TransactionId();
             result.Mode = reader.ReadUInt32();
             if ((result.Mode & (1u << 0)) != 0)
-                result.Account = reader.ReadInt256();
+                result.Account = new Address(0, reader.ReadInt256());
             if ((result.Mode & (1u << 1)) != 0)
                 result.Lt = reader.ReadInt64();
             if ((result.Mode & (1u << 2)) != 0)
@@ -785,12 +786,12 @@ namespace TonSdk.Adnl.LiteClient
     {
         public const uint Constructor = 0xAD4463EC;
 
-        public byte[] Account { get; set; } = Array.Empty<byte>();
+        public Address Account { get; set; }
         public long Lt { get; set; }
 
         public  void WriteTo(TLWriteBuffer writer)
         {
-            writer.WriteBytes(Account, 32);
+            writer.WriteBytes(Account.Hash.ToArray(), 32);
             writer.WriteInt64(Lt);
         }
 
@@ -798,7 +799,7 @@ namespace TonSdk.Adnl.LiteClient
         {
             return new TransactionId3
             {
-                Account = reader.ReadInt256(),
+                Account = new Address(0, reader.ReadInt256()),
                 Lt = reader.ReadInt64(),
             };
         }
