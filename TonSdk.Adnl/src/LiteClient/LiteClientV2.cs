@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using TonSdk.Core;
 using TonSdk.Core.Boc;
 using TonSdk.Core.Crypto;
@@ -31,18 +32,18 @@ namespace TonSdk.Adnl.LiteClient
         /// <summary>
         /// Create a LiteClient with a single connection engine (most common use case).
         /// </summary>
-        public static LiteClientV2 CreateSingle(string host, int port, string publicKey, int reconnectTimeoutMs = 10000)
+        public static LiteClientV2 CreateSingle(string host, int port, string publicKey, int reconnectTimeoutMs = 10000, ILogger? logger = null)
         {
-            var engine = new LiteSingleEngine(host, port, Utils.HexToBytes(publicKey), reconnectTimeoutMs);
+            var engine = new LiteSingleEngine(host, port, Utils.HexToBytes(publicKey), reconnectTimeoutMs, logger);
             return new LiteClientV2(engine, disposeEngine: true);
         }
 
         /// <summary>
         /// Create a LiteClient with a single connection engine (most common use case).
         /// </summary>
-        public static LiteClientV2 CreateSingle(string host, int port, byte[] publicKey, int reconnectTimeoutMs = 10000)
+        public static LiteClientV2 CreateSingle(string host, int port, byte[] publicKey, int reconnectTimeoutMs = 10000, ILogger? logger = null)
         {
-            var engine = new LiteSingleEngine(host, port, publicKey, reconnectTimeoutMs);
+            var engine = new LiteSingleEngine(host, port, publicKey, reconnectTimeoutMs, logger);
             return new LiteClientV2(engine, disposeEngine: true);
         }
 

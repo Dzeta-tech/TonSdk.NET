@@ -7,7 +7,7 @@
         <Nullable>enable</Nullable>
         <RootNamespace>TonSdk.Adnl</RootNamespace>
         <PackageId>Dzeta.TonSdk.Adnl</PackageId>
-        <Version>0.4.0</Version>
+        <Version>0.5.0</Version>
         <Authors>Dzeta Tech</Authors>
         <PackageDescription>Library that allows to interact with Ton ADNL (Thread-safe fork with event-driven LiteClient architecture)</PackageDescription>
         <RepositoryUrl>https://github.com/Dzeta-tech/TonSdk.NET</RepositoryUrl>
@@ -22,6 +22,10 @@
     <ItemGroup>
         <None Include="README.MD" Pack="true" PackagePath=""/>
         <None Include="../../LICENSE" Pack="true" PackagePath=""/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>

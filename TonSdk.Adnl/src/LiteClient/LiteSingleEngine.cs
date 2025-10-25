@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TonSdk.Core;
 using TonSdk.Core.Crypto;
 
@@ -18,6 +20,7 @@ namespace TonSdk.Adnl.LiteClient
         readonly int _port;
         readonly byte[] _publicKey;
         readonly int _reconnectTimeoutMs;
+        readonly ILogger _logger;
         readonly SemaphoreSlim _connectionLock = new(1, 1);
         readonly ConcurrentDictionary<string, QueryContext> _pendingQueries = new();
 
@@ -38,12 +41,16 @@ namespace TonSdk.Adnl.LiteClient
             public CancellationTokenRegistration CancellationRegistration { get; set; }
         }
 
-        public LiteSingleEngine(string host, int port, byte[] publicKey, int reconnectTimeoutMs = 10000)
+        public LiteSingleEngine(string host, int port, byte[] publicKey, int reconnectTimeoutMs = 10000, ILogger? logger = null)
         {
             _host = host;
             _port = port;
             _publicKey = publicKey;
             _reconnectTimeoutMs = reconnectTimeoutMs;
+            _logger = logger ?? NullLogger.Instance;
+
+            _logger.LogDebug("LiteSingleEngine initialized for {Host}:{Port}, reconnectTimeout={ReconnectTimeoutMs}ms", 
+                _host, _port, _reconnectTimeoutMs);
 
             // Start connection immediately in background
             _ = Task.Run(async () =>
@@ -52,9 +59,9 @@ namespace TonSdk.Adnl.LiteClient
                 {
                     await ConnectAsync();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Will retry on first query or via auto-reconnect
+                    _logger.LogWarning(ex, "Initial connection attempt failed, will retry on first query or via auto-reconnect");
                 }
             });
         }
@@ -73,11 +80,15 @@ namespace TonSdk.Adnl.LiteClient
             // Ensure connected
             if (!_isReady)
             {
+                _logger.LogDebug("QueryAsync: Not ready, ensuring connection...");
                 await EnsureConnectedAsync(cancellationToken);
             }
 
             var (queryId, packet) = encoder();
             string queryIdHex = Utils.BytesToHex(queryId);
+
+            _logger.LogDebug("QueryAsync: Sending query {QueryId}, timeout={Timeout}ms, packetSize={PacketSize}bytes", 
+                queryIdHex, timeout, packet.Length);
 
             var tcs = new TaskCompletionSource<byte[]>();
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -87,7 +98,11 @@ namespace TonSdk.Adnl.LiteClient
             {
                 TaskCompletionSource = tcs,
                 Packet = packet,
-                CancellationRegistration = cts.Token.Register(() => tcs.TrySetCanceled(cancellationToken))
+                CancellationRegistration = cts.Token.Register(() => 
+                {
+                    _logger.LogWarning("QueryAsync: Query {QueryId} cancelled/timed out after {Timeout}ms", queryIdHex, timeout);
+                    tcs.TrySetCanceled(cancellationToken);
+                })
             };
 
             _pendingQueries.TryAdd(queryIdHex, context);
@@ -98,13 +113,18 @@ namespace TonSdk.Adnl.LiteClient
                 if (_isReady && _currentClient != null)
                 {
                     await _currentClient.Write(packet);
+                    _logger.LogDebug("QueryAsync: Query {QueryId} sent, waiting for response (pending queries: {PendingCount})", 
+                        queryIdHex, _pendingQueries.Count);
                 }
                 else
                 {
                     throw new InvalidOperationException("Not connected to lite server");
                 }
 
-                return await tcs.Task;
+                var result = await tcs.Task;
+                _logger.LogDebug("QueryAsync: Query {QueryId} completed, responseSize={ResponseSize}bytes", 
+                    queryIdHex, result.Length);
+                return result;
             }
             finally
             {
@@ -223,20 +243,33 @@ namespace TonSdk.Adnl.LiteClient
         {
             try
             {
+                _logger.LogDebug("OnDataReceived: Received {DataSize}bytes (pending queries: {PendingCount})", 
+                    data.Length, _pendingQueries.Count);
+
                 // Parse ADNL message
                 var buffer = new TL.TLReadBuffer(data);
                 byte[] queryId = buffer.ReadBytes(32);
                 string queryIdHex = Utils.BytesToHex(queryId);
 
+                _logger.LogDebug("OnDataReceived: Parsed queryId={QueryId}", queryIdHex);
+
                 if (_pendingQueries.TryRemove(queryIdHex, out var context))
                 {
                     // Read remaining response data (entire remaining buffer)
                     byte[] responseData = buffer.ReadObject();
+                    _logger.LogDebug("OnDataReceived: Matched query {QueryId}, responseSize={ResponseSize}bytes, completing task", 
+                        queryIdHex, responseData.Length);
                     context.TaskCompletionSource.TrySetResult(responseData);
+                }
+                else
+                {
+                    _logger.LogWarning("OnDataReceived: Received response for unknown queryId={QueryId}, pending queries: {PendingQueries}", 
+                        queryIdHex, string.Join(", ", _pendingQueries.Keys));
                 }
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "OnDataReceived: Error processing received data");
                 Error?.Invoke(ex);
             }
         }
