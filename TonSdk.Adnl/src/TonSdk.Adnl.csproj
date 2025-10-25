@@ -7,7 +7,7 @@
         <Nullable>enable</Nullable>
         <RootNamespace>TonSdk.Adnl</RootNamespace>
         <PackageId>Dzeta.TonSdk.Adnl</PackageId>
-        <Version>1.0.0</Version>
+        <Version>1.0.1</Version>
         <Authors>Dzeta Tech</Authors>
         <PackageDescription>Library that allows to interact with Ton ADNL (Modular, DI-compatible LiteClient with clean separation of concerns)</PackageDescription>
         <RepositoryUrl>https://github.com/Dzeta-tech/TonSdk.NET</RepositoryUrl>
