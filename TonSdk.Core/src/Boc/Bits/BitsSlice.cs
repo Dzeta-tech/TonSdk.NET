@@ -176,12 +176,12 @@ public abstract class BitsSliceImpl<T, TU> where T : BitsSliceImpl<T, TU>
 
     public Coins ReadCoins(int decimals = 9)
     {
-        return new Coins((decimal)ReadVarUInt(16), new CoinsOptions(true, decimals));
+        return Coins.FromNano(ReadVarUInt(16));
     }
 
     public Coins LoadCoins(int decimals = 9)
     {
-        return new Coins((decimal)LoadVarUInt(16), new CoinsOptions(true, decimals));
+        return Coins.FromNano(LoadVarUInt(16));
     }
 
     public BigInteger ReadVarUInt(int length)

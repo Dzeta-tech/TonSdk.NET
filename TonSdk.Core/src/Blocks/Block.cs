@@ -205,8 +205,8 @@ public class IntMsgInfo : CommonMsgInfo
             .StoreAddress(opt.Dest)
             .StoreCoins(opt.Value)
             .StoreBit(false) // TODO: implement extracurrency collection
-            .StoreCoins(opt.IhrFee ?? new Coins(0))
-            .StoreCoins(opt.FwdFee ?? new Coins(0))
+            .StoreCoins(opt.IhrFee ?? Coins.Zero)
+            .StoreCoins(opt.FwdFee ?? Coins.Zero)
             .StoreUInt(opt.CreatedLt ?? 0, 64)
             .StoreUInt(opt.CreatedAt ?? 0, 32)
             .Build();
@@ -273,7 +273,7 @@ public class ExtInMsgInfo : CommonMsgInfo
             .StoreBit(true).StoreBit(false) // ext_in_msg_info$10
             .StoreAddress(opt.Src)
             .StoreAddress(opt.Dest)
-            .StoreCoins(opt.ImportFee ?? new Coins(0))
+            .StoreCoins(opt.ImportFee ?? Coins.Zero)
             .Build();
     }
 
@@ -300,7 +300,7 @@ public class ExtInMsgInfo : CommonMsgInfo
         }
         catch
         {
-            importFee = new Coins(0);
+            importFee = Coins.Zero;
         }
 
         slice.SkipBits(slice.RemainderBits - slice.RemainderBits);

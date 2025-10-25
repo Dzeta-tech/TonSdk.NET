@@ -1,338 +1,225 @@
 ﻿using System;
 using System.Globalization;
 using System.Numerics;
-using System.Text.RegularExpressions;
 
 namespace TonSdk.Core.Economics;
 
-public class CoinsOptions(bool isNano = false, int decimals = 9)
+/// <summary>
+///     Represents an amount of TON cryptocurrency.
+///     Immutable value type that stores value in nanotons (10^-9 TON).
+/// </summary>
+public readonly struct Coins : IEquatable<Coins>, IComparable<Coins>
 {
-    public bool IsNano { get; set; } = isNano;
-    public int Decimals { get; set; } = decimals;
-}
+    const int DefaultDecimals = 9;
+    static readonly decimal DecimalMultiplier = 1_000_000_000m; // 10^9
 
-public class Coins
-{
     /// <summary>
-    ///     Creates a new instance of the Coins class.
+    ///     Value in nanotons (smallest unit)
     /// </summary>
-    /// <param name="value">The value of the coins.</param>
-    /// <param name="options">Optional options for customizing the coins.</param>
-    public Coins(object value, CoinsOptions? options = null)
-    {
-        bool isNano = false;
-        int decimals = 9;
+    public readonly BigInteger NanoValue;
 
-        if (options != null)
+    Coins(BigInteger nanoValue)
+    {
+        NanoValue = nanoValue;
+    }
+
+    #region Factory Methods
+
+    /// <summary>
+    ///     Creates Coins from nanotons (smallest unit).
+    /// </summary>
+    public static Coins FromNano(BigInteger nanoValue)
+    {
+        return new Coins(nanoValue);
+    }
+
+    /// <summary>
+    ///     Creates Coins from nanotons (smallest unit).
+    /// </summary>
+    public static Coins FromNano(long nanoValue)
+    {
+        return new Coins(new BigInteger(nanoValue));
+    }
+
+    /// <summary>
+    ///     Creates Coins from nanotons string.
+    /// </summary>
+    public static Coins FromNano(string nanoValue)
+    {
+        if (!BigInteger.TryParse(nanoValue, out BigInteger value))
+            throw new ArgumentException($"Invalid nano value: {nanoValue}", nameof(nanoValue));
+
+        return new Coins(value);
+    }
+
+    /// <summary>
+    ///     Creates Coins from TON amount (with decimals).
+    /// </summary>
+    public static Coins FromCoins(decimal amount)
+    {
+        if (amount < 0)
+            throw new ArgumentException("Amount cannot be negative", nameof(amount));
+
+        BigInteger nanoValue = new BigInteger(amount * DecimalMultiplier);
+        return new Coins(nanoValue);
+    }
+
+    /// <summary>
+    ///     Creates Coins from string representation (supports both "1.5" TON and "1500000000" nano).
+    /// </summary>
+    public static Coins Parse(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException("Value cannot be null or empty", nameof(value));
+
+        value = value.Replace(",", ".").Trim();
+
+        // Try parsing as decimal (TON format)
+        if (value.Contains("."))
         {
-            isNano = options?.IsNano != null ? options.IsNano : false;
-            decimals = options?.Decimals != null ? options.Decimals : 9;
+            if (!decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal decimalValue))
+                throw new ArgumentException($"Invalid coins value: {value}", nameof(value));
+
+            return FromCoins(decimalValue);
         }
 
-        string? valueStr = value?.ToString().Replace(",", ".");
+        // Parse as nanotons
+        if (!BigInteger.TryParse(value, out BigInteger nanoValue))
+            throw new ArgumentException($"Invalid coins value: {value}", nameof(value));
 
-        CheckCoinsType(valueStr);
-        CheckCoinsDecimals(decimals);
-
-        TryConvertCoinsValue(valueStr, out decimal decimalValue);
-
-        int digitsValue = GetDigitsAfterDecimalPoint(decimalValue);
-        if (digitsValue > decimals)
-            throw new Exception(
-                $"Invalid Coins value, decimals places \"{digitsValue}\" can't be greater than selected \"{decimals}\"");
-
-        Decimals = decimals;
-        Multiplier = new decimal(Math.Pow(10, Decimals));
-        Value = !isNano ? decimalValue * Multiplier : decimalValue;
+        return new Coins(nanoValue);
     }
 
-    decimal Value { get; set; }
-    int Decimals { get; }
-    decimal Multiplier { get; }
+    /// <summary>
+    ///     Zero coins.
+    /// </summary>
+    public static Coins Zero => new(BigInteger.Zero);
+
+    #endregion
+
+    #region Arithmetic Operations
 
     /// <summary>
-    ///     Adds the specified Coins to the current instance.
+    ///     Adds two Coins values.
     /// </summary>
-    /// <param name="coins">The Coins to add.</param>
-    /// <returns>A new Coins instance with the sum of the values.</returns>
-    public Coins Add(Coins coins)
+    public Coins Add(Coins other)
     {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-
-        Value += coins.Value;
-        return this;
+        return new Coins(NanoValue + other.NanoValue);
     }
 
     /// <summary>
-    ///     Subtracts the specified Coins from the current instance.
+    ///     Subtracts two Coins values.
     /// </summary>
-    /// <param name="coins">The Coins to subtract.</param>
-    /// <returns>A new Coins instance with the difference of the values.</returns>
-    public Coins Sub(Coins coins)
+    public Coins Sub(Coins other)
     {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-
-        Value -= coins.Value;
-        return this;
+        return new Coins(NanoValue - other.NanoValue);
     }
 
     /// <summary>
-    ///     Multiplies the current instance of Coins by the specified value.
+    ///     Multiplies Coins by a decimal value.
     /// </summary>
-    /// <param name="value">The value to multiply by.</param>
-    /// <returns>A new Coins instance with the multiplied value.</returns>
-    public Coins Mul(object value)
+    public Coins Mul(decimal multiplier)
     {
-        CheckValue(value);
-        CheckConvertibility(value);
-
-        decimal multiplier = Convert.ToDecimal(value);
-
-        Value *= multiplier;
-        return this;
+        BigInteger result = new BigInteger((decimal)NanoValue * multiplier);
+        return new Coins(result);
     }
 
     /// <summary>
-    ///     Divides the current instance of Coins by the specified value.
+    ///     Divides Coins by a decimal value.
     /// </summary>
-    /// <param name="value">The value to divide by.</param>
-    /// <returns>A new Coins instance with the divided value.</returns>
-    public Coins Div(object value)
+    public Coins Div(decimal divisor)
     {
-        CheckValue(value);
-        CheckConvertibility(value);
+        if (divisor == 0)
+            throw new DivideByZeroException("Cannot divide by zero");
 
-        decimal divider = Convert.ToDecimal(value);
-
-        Value /= divider;
-        return this;
+        BigInteger result = new BigInteger((decimal)NanoValue / divisor);
+        return new Coins(result);
     }
 
-    /// <summary>
-    ///     Checks if the current instance of Coins is equal to the specified Coins.
-    /// </summary>
-    /// <param name="coins">The Coins to compare.</param>
-    /// <returns>True if the values are equal, false otherwise.</returns>
-    public bool Eq(Coins coins)
-    {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-        return Value == coins.Value;
-    }
+    #endregion
+
+    #region Conversions
 
     /// <summary>
-    ///     Checks if the current instance of Coins is greater than the specified Coins.
+    ///     Returns value in nanotons as string.
     /// </summary>
-    /// <param name="coins">The Coins to compare.</param>
-    /// <returns>True if the current value is greater, false otherwise.</returns>
-    public bool Gt(Coins coins)
-    {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-        return Value > coins.Value;
-    }
-
-    /// <summary>
-    ///     Checks if the current instance of Coins is greater or equal than the specified Coins.
-    /// </summary>
-    /// <param name="coins">The Coins to compare.</param>
-    /// <returns>True if the current value is greater or equal, false otherwise.</returns>
-    public bool Gte(Coins coins)
-    {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-        return Value >= coins.Value;
-    }
-
-    /// <summary>
-    ///     Checks if the current instance of Coins is less than the specified Coins.
-    /// </summary>
-    /// <param name="coins">The Coins to compare.</param>
-    /// <returns>True if the current value is less, false otherwise.</returns>
-    public bool Lt(Coins coins)
-    {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-        return Value < coins.Value;
-    }
-
-    /// <summary>
-    ///     Checks if the current instance of Coins is less or equal than the specified Coins.
-    /// </summary>
-    /// <param name="coins">The Coins to compare.</param>
-    /// <returns>True if the current value is less or equal, false otherwise.</returns>
-    public bool Lte(Coins coins)
-    {
-        CheckCoins(coins);
-        CompareCoinsDecimals(this, coins);
-        return Value <= coins.Value;
-    }
-
-    /// <summary>
-    ///     Checks if the coins is negative.
-    /// </summary>
-    /// <returns>True if the coins is negative; otherwise, false.</returns>
-    public bool IsNegative()
-    {
-        return Value < 0;
-    }
-
-    /// <summary>
-    ///     Checks if the coins is positive.
-    /// </summary>
-    /// <returns>True if the coins is positive; otherwise, false.</returns>
-    public bool IsPositive()
-    {
-        return Value > 0;
-    }
-
-    /// <summary>
-    ///     Checks if the coins is equal to zero.
-    /// </summary>
-    /// <returns>True if the coins is equal to zero; otherwise, false.</returns>
-    public bool IsZero()
-    {
-        return Value == 0;
-    }
-
-    /// <summary>
-    ///     Converts the Coins to its nano string representation.
-    /// </summary>
-    /// <returns>The string representation of the nano Coins.</returns>
     public string ToNano()
     {
-        return Value.ToString("F0");
+        return NanoValue.ToString();
     }
 
     /// <summary>
-    ///     Returns a string representation of the Coins value.
+    ///     Returns value in TON (with decimal point).
     /// </summary>
-    /// <returns>A string representation of the Coins value.</returns>
-    public override string ToString()
-    {
-        decimal value = Value / Multiplier;
-        string formattedValue = value.ToString("F" + Decimals);
-
-        // Remove trailing zeros
-        Regex re1 = new($"\\.{new string('0', Decimals)}$");
-        Regex re2 = new("(\\.[0-9]*?[0-9])0+$");
-
-        string coins = re2.Replace(re1.Replace(formattedValue, string.Empty), "$1");
-
-        return coins;
-    }
-
-    static void CheckCoinsType(object value)
-    {
-        if (IsValid(value) && TryConvertCoinsValue(value, out _)) return;
-        if (IsCoins(value)) return;
-
-        throw new Exception("Invalid Coins value");
-    }
-
-    static void CheckCoinsDecimals(int decimals)
-    {
-        if (decimals < 0 || decimals > 18) throw new Exception("Invalid decimals value, must be 0-18");
-    }
-
-    static void CheckCoins(Coins value)
-    {
-        //if (IsCoins(value)) return;
-        //throw new Exception("Invalid value");
-    }
-
-    static void CompareCoinsDecimals(Coins a, Coins b)
-    {
-        if (a.Decimals != b.Decimals)
-            throw new Exception("Can't perform mathematical operation of Coins with different decimals");
-    }
-
-    static void CheckValue(object value)
-    {
-        if (IsValid(value)) return;
-        throw new Exception("Invalid value");
-    }
-
-    static void CheckConvertibility(object value)
-    {
-        if (TryConvertCoinsValue(value, out _)) return;
-
-        throw new Exception("Invalid value");
-    }
-
-    static bool IsValid(object value)
-    {
-        return value is string || value is int || value is decimal || value is double || value is float ||
-               value is long;
-    }
-
-    static bool TryConvertCoinsValue(object value, out decimal result)
-    {
-        result = 0;
-        try
-        {
-            if (decimal.TryParse(value.ToString(), NumberStyles.Any, new CultureInfo("en-US"), out result))
-                return true;
-
-            double doubleValue;
-            if (double.TryParse(value.ToString(), NumberStyles.Any, new CultureInfo("en-US"), out doubleValue))
-            {
-                result = (decimal)doubleValue;
-                return true;
-            }
-
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    static bool IsCoins(object value)
-    {
-        return value is Coins;
-    }
-
-    static int GetDigitsAfterDecimalPoint(decimal number)
-    {
-        string[] parts = number.ToString(new CultureInfo("en-US")).Split('.');
-        if (parts.Length == 2) return parts[1].Length;
-
-        return 0;
-    }
-
-    /// <summary>
-    ///     Creates a new Coins instance from the specified value in nano.
-    /// </summary>
-    /// <param name="value">The value in nano.</param>
-    /// <param name="decimals">The number of decimal places.</param>
-    /// <returns>A new Coins instance representing the value in nano.</returns>
-    public static Coins FromNano(object value, int decimals = 9)
-    {
-        CheckCoinsType(value);
-        CheckCoinsDecimals(decimals);
-
-        return new Coins(value, new CoinsOptions(true, decimals));
-    }
-
-    /// <summary>
-    ///     Converts the value of the Coins instance to a BigInteger.
-    /// </summary>
-    /// <returns>A BigInteger representation of the value.</returns>
-    public BigInteger ToBigInt()
-    {
-        return new BigInteger(Value);
-    }
-
-    /// <summary>
-    ///     Return the pointed value of the Coins instance in decimal.
-    /// </summary>
-    /// <returns>A Decimal representation of the value.</returns>
     public decimal ToDecimal()
     {
-        return Value / Multiplier;
+        return (decimal)NanoValue / DecimalMultiplier;
     }
+
+    /// <summary>
+    ///     Returns value as BigInteger (nanotons).
+    /// </summary>
+    public BigInteger ToBigInt()
+    {
+        return NanoValue;
+    }
+
+    /// <summary>
+    ///     Returns formatted TON value with appropriate decimal places (removes trailing zeros).
+    /// </summary>
+    public override string ToString()
+    {
+        decimal value = ToDecimal();
+        string formatted = value.ToString($"F{DefaultDecimals}", CultureInfo.InvariantCulture);
+
+        // Remove trailing zeros after decimal point
+        if (formatted.Contains("."))
+        {
+            formatted = formatted.TrimEnd('0').TrimEnd('.');
+        }
+
+        return formatted;
+    }
+
+    #endregion
+
+    #region Comparison & Equality
+
+    public bool IsNegative() => NanoValue < 0;
+    public bool IsPositive() => NanoValue > 0;
+    public bool IsZero() => NanoValue == 0;
+
+    public bool Equals(Coins other)
+    {
+        return NanoValue == other.NanoValue;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Coins other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return NanoValue.GetHashCode();
+    }
+
+    public int CompareTo(Coins other)
+    {
+        return NanoValue.CompareTo(other.NanoValue);
+    }
+
+    public static bool operator ==(Coins left, Coins right) => left.Equals(right);
+    public static bool operator !=(Coins left, Coins right) => !left.Equals(right);
+    public static bool operator <(Coins left, Coins right) => left.NanoValue < right.NanoValue;
+    public static bool operator >(Coins left, Coins right) => left.NanoValue > right.NanoValue;
+    public static bool operator <=(Coins left, Coins right) => left.NanoValue <= right.NanoValue;
+    public static bool operator >=(Coins left, Coins right) => left.NanoValue >= right.NanoValue;
+
+    public static Coins operator +(Coins left, Coins right) => left.Add(right);
+    public static Coins operator -(Coins left, Coins right) => left.Sub(right);
+    public static Coins operator *(Coins left, decimal right) => left.Mul(right);
+    public static Coins operator /(Coins left, decimal right) => left.Div(right);
+
+    #endregion
 }
