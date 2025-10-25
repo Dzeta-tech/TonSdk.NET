@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TonSdk.Core;
 
@@ -58,6 +60,19 @@ namespace TonSdk.Core.EntityFrameworkCore
             Array.Copy(bytes, 4, hash, 0, 32);
             
             return new Address(workchain, hash);
+        }
+
+        /// <summary>
+        /// Creates a ValueComparer for Address that compares the underlying byte representation.
+        /// This enables efficient database-level comparisons without loading data into memory.
+        /// </summary>
+        public static ValueComparer<Address> CreateComparer()
+        {
+            return new ValueComparer<Address>(
+                equalsExpression: (a, b) => a.Equals(b),
+                hashCodeExpression: a => a.GetHashCode(),
+                snapshotExpression: a => a // Address is immutable struct, can return as-is
+            );
         }
     }
 
