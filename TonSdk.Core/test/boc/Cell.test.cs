@@ -1,5 +1,0 @@
-namespace TonSdk.Core.Tests;
-
-public class CellTest
-{
-}
