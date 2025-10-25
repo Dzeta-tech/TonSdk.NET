@@ -8,7 +8,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         
         <PackageId>Dzeta.TonSdk.Core.EntityFrameworkCore</PackageId>
-        <Version>0.1.0</Version>
+        <Version>0.2.0</Version>
         <Authors>Dzeta Tech</Authors>
         <PackageDescription>Entity Framework Core integration for TonSdk.Core, providing value converters for Address and other TON types</PackageDescription>
         <RepositoryUrl>https://github.com/Dzeta-tech/TonSdk.NET</RepositoryUrl>
