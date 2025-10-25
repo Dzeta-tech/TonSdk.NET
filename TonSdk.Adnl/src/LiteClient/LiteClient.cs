@@ -80,7 +80,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetMasterchainInfo();
 
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -98,7 +98,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetMasterchainInfoExt();
 
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -116,7 +116,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetTime();
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -133,7 +133,7 @@ namespace TonSdk.Adnl.LiteClient
             
             (id, data) = LiteClientEncoder.EncodeGetVersion();
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -151,7 +151,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetBlock(block, "liteServer.getBlock id:tonNode.blockIdExt = liteServer.BlockData");
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -169,7 +169,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetBlockHeader(block);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -187,7 +187,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeSendMessage(body);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -228,7 +228,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeRunSmcMethod(blockId, address, (long)crcExtended, stack, mode);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -248,7 +248,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetShardInfo(blockId, workchain, shard, exact);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -269,7 +269,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetAllShardsInfo(blockId);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -293,7 +293,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetTransactions(count, account, lt, hashBytes);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -311,7 +311,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeLookUpBlock(workchain, shard, seqno, lt, uTime);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -330,7 +330,7 @@ namespace TonSdk.Adnl.LiteClient
                 "liteServer.listBlockTransactions id:tonNode.blockIdExt mode:# count:# after:mode.7?liteServer.transactionId3 reverse_order:mode.6?true want_proof:mode.5?true = liteServer.BlockTransactions");
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -349,7 +349,7 @@ namespace TonSdk.Adnl.LiteClient
                 "liteServer.listBlockTransactionsExt id:tonNode.blockIdExt mode:# count:# after:mode.7?liteServer.transactionId3 reverse_order:mode.6?true want_proof:mode.5?true = liteServer.BlockTransactionsExt");
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -368,7 +368,7 @@ namespace TonSdk.Adnl.LiteClient
             (id, data) = LiteClientEncoder.EncodeGetBlockProof(knownBlock, targetBlock);
             
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -387,7 +387,7 @@ namespace TonSdk.Adnl.LiteClient
 
             (id, data) = LiteClientEncoder.EncodeGetConfigAll(blockId);
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -406,7 +406,7 @@ namespace TonSdk.Adnl.LiteClient
 
             (id, data) = LiteClientEncoder.EncodeGetConfigParams(blockId, paramIds);
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -423,7 +423,7 @@ namespace TonSdk.Adnl.LiteClient
             
             (id, data) = LiteClientEncoder.EncodeGetLibraries(libraryList);
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -440,7 +440,7 @@ namespace TonSdk.Adnl.LiteClient
             
             (id, data) = LiteClientEncoder.EncodeGetShardBlockProof(blockIdExtended);
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
@@ -460,7 +460,7 @@ namespace TonSdk.Adnl.LiteClient
             
             (id, data) = LiteClientEncoder.EncodeGetAccountState(blockId, address, query);
             var tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.Add(Utils.BytesToHex(id), tcs);
+            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
             
             await _adnlClient.Write(data);
             TLReadBuffer payload = await tcs.Task;
