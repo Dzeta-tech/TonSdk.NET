@@ -279,12 +279,11 @@ namespace TonSdk.Adnl.LiteClient
                     
                     _logger.LogDebug("OnDataReceived: Response code={ResponseCode:X8}", responseCode);
                     
-                    // Check for liteServer.error (0xBBA9E148 = -1146494648)
-                    if (responseCode == 0xBBA9E148)
+                    // Check for liteServer.error
+                    if (responseCode == LiteServerError.Constructor)
                     {
-                        int errorCode = liteBuffer.ReadInt32();
-                        string errorMessage = liteBuffer.ReadString();
-                        var ex = new Exception($"LiteServer error {errorCode}: {errorMessage}");
+                        var error = LiteServerError.ReadFrom(liteBuffer);
+                        var ex = new Exception($"LiteServer error {error.Code}: {error.Message}");
                         _logger.LogError(ex, "OnDataReceived: LiteServer returned error for query {QueryId}", queryIdHex);
                         context.TaskCompletionSource.TrySetException(ex);
                         return;

@@ -1,550 +1,274 @@
 using System;
-using System.Collections.Concurrent;
-using System.Numerics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TonSdk.Adnl.TL;
+using Microsoft.Extensions.Logging;
 using TonSdk.Core;
-using TonSdk.Core.Boc;
 using TonSdk.Core.Crypto;
 
 namespace TonSdk.Adnl.LiteClient
 {
-    public class LiteClient
+    /// <summary>
+    /// High-level lite client for TON blockchain
+    /// Matches the API from ton-lite-client (TypeScript)
+    /// </summary>
+    public class LiteClient : IDisposable
     {
-        readonly AdnlClientTcp _adnlClient;
-        ConcurrentDictionary<string, TaskCompletionSource<TLReadBuffer>> _pendingRequests;
+        readonly ILiteEngine _engine;
+        readonly bool _disposeEngine;
 
-        public LiteClient(int host, int port, byte[] peerPublicKey)
+        public ILiteEngine Engine => _engine;
+
+        LiteClient(ILiteEngine engine, bool disposeEngine = true)
         {
-            _adnlClient = new AdnlClientTcp(host, port, peerPublicKey);
-            _adnlClient.DataReceived += OnDataReceived;
+            _engine = engine;
+            _disposeEngine = disposeEngine;
         }
 
-        public LiteClient(int host, int port, string peerPublicKey)
+        /// <summary>
+        /// Create a lite client with a single TCP connection
+        /// </summary>
+        public static LiteClient Create(
+            string host,
+            int port,
+            byte[] publicKey,
+            int reconnectTimeoutMs = 10000,
+            ILogger? logger = null)
         {
-            _adnlClient = new AdnlClientTcp(host, port, peerPublicKey);
-            _adnlClient.DataReceived += OnDataReceived;
+            var engine = new LiteSingleEngine(host, port, publicKey, reconnectTimeoutMs, logger);
+            return new LiteClient(engine, disposeEngine: true);
         }
 
-        public LiteClient(string host, int port, byte[] peerPublicKey)
+        /// <summary>
+        /// Create a lite client with a single TCP connection
+        /// </summary>
+        public static LiteClient Create(
+            string host,
+            int port,
+            string publicKeyHex,
+            int reconnectTimeoutMs = 10000,
+            ILogger? logger = null)
         {
-            _adnlClient = new AdnlClientTcp(host, port, peerPublicKey);
-            _adnlClient.DataReceived += OnDataReceived;
+            return Create(host, port, Utils.HexToBytes(publicKeyHex), reconnectTimeoutMs, logger);
         }
 
-        public LiteClient(string host, int port, string peerPublicKey)
+        /// <summary>
+        /// Create a lite client with a custom engine
+        /// </summary>
+        public static LiteClient Create(ILiteEngine engine)
         {
-            _adnlClient = new AdnlClientTcp(host, port, peerPublicKey);
-            _adnlClient.DataReceived += OnDataReceived;
+            return new LiteClient(engine, disposeEngine: false);
         }
 
-        public async Task Connect(CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Get masterchain info
+        /// </summary>
+        public async Task<LiteServerMasterchainInfo> GetMasterchainInfo(
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State == AdnlClientState.Open) return;
-            _pendingRequests = new ConcurrentDictionary<string, TaskCompletionSource<TLReadBuffer>>();
-            await _adnlClient.Connect();
-            while (_adnlClient.State != AdnlClientState.Open)
-            {
-                if (cancellationToken.IsCancellationRequested) return;
-                await Task.Delay(150, cancellationToken);
-            }
+            byte[] response = await _engine.QueryAsync(
+                Encoder.EncodeMasterchainInfo,
+                cancellationToken: cancellationToken);
+
+            return Decoder.DecodeMasterchainInfo(response);
         }
 
-        public void Disconnect()
+        /// <summary>
+        /// Get extended masterchain info
+        /// </summary>
+        public async Task<LiteServerMasterchainInfoExt> GetMasterchainInfoExt(
+            uint mode = 0,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open) return;
-            _pendingRequests = new ConcurrentDictionary<string, TaskCompletionSource<TLReadBuffer>>();
-            _adnlClient.End();
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeMasterchainInfoExt(mode),
+                cancellationToken: cancellationToken);
+
+            return Decoder.DecodeMasterchainInfoExt(response);
         }
 
-        public async Task PingPong()
+        /// <summary>
+        /// Get current time from the lite server
+        /// </summary>
+        public async Task<LiteServerCurrentTime> GetTime(
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
+            byte[] response = await _engine.QueryAsync(
+                Encoder.EncodeTime,
+                cancellationToken: cancellationToken);
 
-            byte[] data = LiteClientEncoder.EncodePingPong();
-            await _adnlClient.Write(data);
+            return Decoder.DecodeTime(response);
         }
 
-        public async Task<MasterChainInfo> GetMasterChainInfo()
+        /// <summary>
+        /// Get lite server version
+        /// </summary>
+        public async Task<LiteServerVersion> GetVersion(
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                Encoder.EncodeVersion,
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeGetMasterchainInfo();
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetMasterchainInfo(payload);
+            return Decoder.DecodeVersion(response);
         }
 
-        public async Task<MasterChainInfoExtended> GetMasterChainInfoExtended()
+        /// <summary>
+        /// Get block data
+        /// </summary>
+        public async Task<LiteServerBlockData> GetBlock(
+            BlockIdExt id,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeBlock(id),
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeGetMasterchainInfoExt();
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetMasterchainInfoExtended(payload);
+            return Decoder.DecodeBlock(response);
         }
 
-        public async Task<int> GetTime()
+        /// <summary>
+        /// Get block header
+        /// </summary>
+        public async Task<LiteServerBlockHeader> GetBlockHeader(
+            BlockIdExt id,
+            uint mode = 0,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeBlockHeader(id, mode),
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeGetTime();
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return -1;
-            return LiteClientDecoder.DecodeGetTime(payload);
+            return Decoder.DecodeBlockHeader(response);
         }
 
-        public async Task<ChainVersion> GetVersion()
+        /// <summary>
+        /// Get all shards info for a given masterchain block
+        /// </summary>
+        public async Task<LiteServerAllShardsInfo> GetAllShardsInfo(
+            BlockIdExt id,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeAllShardsInfo(id),
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeGetVersion();
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetVersion(payload);
+            return Decoder.DecodeAllShardsInfo(response);
         }
 
-        public async Task<byte[]> GetBlock(BlockIdExtended block)
+        /// <summary>
+        /// Lookup block by workchain, shard, and optional parameters
+        /// </summary>
+        public async Task<LiteServerBlockHeader> LookupBlock(
+            int workchain,
+            long shard,
+            int? seqno = null,
+            long? lt = null,
+            uint? utime = null,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetBlock(block,
-                "liteServer.getBlock id:tonNode.blockIdExt = liteServer.BlockData");
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetBlock(payload);
-        }
-
-        public async Task<BlockHeader> GetBlockHeader(BlockIdExtended block)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetBlockHeader(block);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeBlockHeader(payload);
-        }
-
-        public async Task<int> SendMessage(byte[] body)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeSendMessage(body);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return -1;
-            return LiteClientDecoder.DecodeSendMessage(payload);
-        }
-
-        public async Task<AccountStateResult> GetAccountState(Address address, BlockIdExtended? blockIdExtended = null)
-        {
-            return await FetchAccountState(address,
-                "liteServer.getAccountState id:tonNode.blockIdExt account:liteServer.accountId = liteServer.AccountState",
-                blockIdExtended);
-        }
-
-        public async Task<AccountStateResult> GetAccountStatePrunned(Address address,
-            BlockIdExtended? blockIdExtended = null)
-        {
-            return await FetchAccountState(address,
-                "liteServer.getAccountStatePrunned id:tonNode.blockIdExt account:liteServer.accountId = liteServer.AccountState",
-                blockIdExtended);
-        }
-
-        public async Task<RunSmcMethodResult> RunSmcMethod(Address address, string methodName, byte[] stack,
-            RunSmcOptions options, BlockIdExtended? blockIdExtended = null)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            ushort crc = Crc32.CalculateCrc16Xmodem(Encoding.UTF8.GetBytes(methodName));
-            ulong crcExtended = (ulong)(crc & 0xffff) | 0x10000;
-
             uint mode = 0;
-            if (options.ShardProof || options.Proof)
-                mode |= 1u << 0;
-            if (options.StateProof)
-                mode |= 1u << 1;
-            if (options.Result)
-                mode |= 1u << 2;
-            if (options.InitC7)
-                mode |= 1u << 3;
-            if (options.LibExtras)
-                mode |= 1u << 4;
+            if (seqno.HasValue) mode |= 1;
+            if (lt.HasValue) mode |= 2;
+            if (utime.HasValue) mode |= 4;
 
-            BlockIdExtended blockId = blockIdExtended ?? (await GetMasterChainInfo()).LastBlockId;
+            var blockId = new BlockId(workchain, shard, seqno ?? 0);
 
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeLookupBlock(blockId, mode, lt, utime),
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeRunSmcMethod(blockId, address, (long)crcExtended, stack, mode);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeRunSmcMethod(payload);
+            return Decoder.DecodeBlockHeader(response);
         }
 
-        public async Task<ShardInfo> GetShardInfo(int workchain, long shard, bool exact = false,
-            BlockIdExtended? blockIdExtended = null)
+        /// <summary>
+        /// List transactions in a block
+        /// </summary>
+        public async Task<LiteServerBlockTransactions> ListBlockTransactions(
+            BlockIdExt id,
+            uint count = 1024,
+            LiteServerTransactionId3 after = null,
+            bool reverseOrder = false,
+            bool wantProof = false,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            BlockIdExtended blockId = blockIdExtended ?? (await GetMasterChainInfo()).LastBlockId;
+            uint mode = 0;
+            if (wantProof) mode |= 32;      // bit 5
+            if (reverseOrder) mode |= 64;    // bit 6
+            if (after != null) mode |= 128; // bit 7
 
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeListBlockTransactions(id, count, mode, after),
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeGetShardInfo(blockId, workchain, shard, exact);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetShardInfo(payload);
+            return Decoder.DecodeBlockTransactions(response);
         }
 
-        public async Task<byte[]> GetAllShardsInfo(BlockIdExtended blockIdExtended = null)
+        /// <summary>
+        /// Get account state
+        /// </summary>
+        public async Task<LiteServerAccountState> GetAccountState(
+            BlockIdExt id,
+            LiteServerAccountId account,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeAccountState(id, account),
+                cancellationToken: cancellationToken);
 
-            BlockIdExtended blockId = blockIdExtended ?? (await GetMasterChainInfo()).LastBlockId;
-
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetAllShardsInfo(blockId);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetAllShardsInfo(payload);
+            return Decoder.DecodeAccountState(response);
         }
 
-        public async Task<byte[]> GetTransactions(uint count, Address account, long lt, string hash)
+        /// <summary>
+        /// Get account state by address
+        /// </summary>
+        public async Task<LiteServerAccountState> GetAccountState(
+            BlockIdExt id,
+            Address address,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-
-            byte[] hashBytes;
-            if (hash.isHexString()) hashBytes = Utils.HexToBytes(hash);
-            else if (hash.isBase64()) hashBytes = Convert.FromBase64String(hash);
-            else throw new Exception("Not valid hash string. Set only in hex or non-url base64.");
-
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetTransactions(count, account, lt, hashBytes);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetTransactions(payload);
+            var accountId = new LiteServerAccountId 
+            { 
+                Workchain = address.Workchain, 
+                Id = address.Hash.ToArray() 
+            };
+            return await GetAccountState(id, accountId, cancellationToken);
         }
 
-        public async Task<BlockHeader> LookUpBlock(int workchain, long shard, long? seqno = null, ulong? lt = null,
-            ulong? uTime = null)
+        /// <summary>
+        /// Get transactions for an account
+        /// </summary>
+        public async Task<LiteServerTransactionList> GetTransactions(
+            uint count,
+            LiteServerAccountId account,
+            long lt,
+            byte[] hash,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
+            byte[] response = await _engine.QueryAsync(
+                () => Encoder.EncodeTransactions(count, account, lt, hash),
+                cancellationToken: cancellationToken);
 
-            (id, data) = LiteClientEncoder.EncodeLookUpBlock(workchain, shard, seqno, lt, uTime);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeBlockHeader(payload);
+            return Decoder.DecodeTransactions(response);
         }
 
-        public async Task<ListBlockTransactionsResult> ListBlockTransactions(BlockIdExtended blockIdExtended,
-            uint count, ITransactionId after = null, bool? reverseOrder = null, bool? wantProof = null)
+        /// <summary>
+        /// Send a message to the network
+        /// </summary>
+        public async Task<byte[]> SendMessage(
+            byte[] body,
+            CancellationToken cancellationToken = default)
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeListBlockTransactions(blockIdExtended, count, after, reverseOrder,
-                wantProof,
-                "liteServer.listBlockTransactions id:tonNode.blockIdExt mode:# count:# after:mode.7?liteServer.transactionId3 reverse_order:mode.6?true want_proof:mode.5?true = liteServer.BlockTransactions");
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeListBlockTransactions(payload);
+            return await _engine.QueryAsync(
+                () => Encoder.EncodeSendMessage(body),
+                cancellationToken: cancellationToken);
         }
 
-        public async Task<ListBlockTransactionsExtendedResult> ListBlockTransactionsExtended(
-            BlockIdExtended blockIdExtended, uint count, ITransactionId after = null, bool? reverseOrder = null,
-            bool? wantProof = null)
+        public void Dispose()
         {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeListBlockTransactions(blockIdExtended, count, after, reverseOrder,
-                wantProof,
-                "liteServer.listBlockTransactionsExt id:tonNode.blockIdExt mode:# count:# after:mode.7?liteServer.transactionId3 reverse_order:mode.6?true want_proof:mode.5?true = liteServer.BlockTransactionsExt");
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeListBlockTransactionsExtended(payload);
-        }
-
-        [Obsolete]
-        public async Task<PartialBlockProof> GetBlockProof(BlockIdExtended knownBlock,
-            BlockIdExtended targetBlock = null)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetBlockProof(knownBlock, targetBlock);
-
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetBlockProof(payload);
-        }
-
-        public async Task<ConfigInfo> GetConfigAll(BlockIdExtended? blockIdExtended = null)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            BlockIdExtended blockId = blockIdExtended ?? (await GetMasterChainInfo()).LastBlockId;
-
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetConfigAll(blockId);
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetConfigAll(payload);
-        }
-
-        public async Task<ConfigInfo> GetConfigParams(int[] paramIds, BlockIdExtended? blockIdExtended = null)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            BlockIdExtended blockId = blockIdExtended ?? (await GetMasterChainInfo()).LastBlockId;
-
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetConfigParams(blockId, paramIds);
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetConfigAll(payload);
-        }
-
-        public async Task<LibraryEntry[]> GetLibraries(BigInteger[] libraryList)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetLibraries(libraryList);
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetLibraries(payload);
-        }
-
-        public async Task<ShardBlockProof> GetShardBlockProof(BlockIdExtended blockIdExtended)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetShardBlockProof(blockIdExtended);
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-            return LiteClientDecoder.DecodeGetShardBlockProof(payload);
-        }
-
-        async Task<AccountStateResult> FetchAccountState(Address address, string query,
-            BlockIdExtended? blockIdExtended = null)
-        {
-            if (_adnlClient.State != AdnlClientState.Open)
-                throw new Exception(
-                    "Connection to lite server must be init before method calling. Use Connect() method to set up connection.");
-
-            BlockIdExtended blockId = blockIdExtended ?? (await GetMasterChainInfo()).LastBlockId;
-
-            byte[] id;
-            byte[] data;
-
-            (id, data) = LiteClientEncoder.EncodeGetAccountState(blockId, address, query);
-            TaskCompletionSource<TLReadBuffer> tcs = new TaskCompletionSource<TLReadBuffer>();
-            _pendingRequests.TryAdd(Utils.BytesToHex(id), tcs);
-
-            await _adnlClient.Write(data);
-            TLReadBuffer payload = await tcs.Task;
-            if (payload == null) return null;
-
-            AccountStateResult stateBytes = LiteClientDecoder.DecodeGetAccountState(payload);
-            return stateBytes;
-        }
-
-        async void OnDataReceived(byte[] data)
-        {
-            TLReadBuffer readBuffer = new TLReadBuffer(data);
-
-            uint answer = readBuffer.ReadUInt32();
-
-            if (answer == BitConverter.ToUInt32(
-                    Crc32.ComputeChecksum(
-                        Encoding.UTF8.GetBytes("tcp.pong random_id:long = tcp.Pong")), 0)) return;
-
-            string queryId = Utils.BytesToHex(readBuffer.ReadInt256()); // queryId
-            byte[] liteQuery = readBuffer.ReadBuffer();
-            TLReadBuffer liteQueryBuffer = new TLReadBuffer(liteQuery);
-            uint responseCode = liteQueryBuffer.ReadUInt32(); // liteQuery
-
-            if (responseCode == BitConverter.ToUInt32(Crc32.ComputeChecksum(
-                        Encoding.UTF8.GetBytes(
-                            "liteServer.error code:int message:string = liteServer.Error")),
-                    0))
+            if (_disposeEngine)
             {
-                int code = liteQueryBuffer.ReadInt32();
-                string message = liteQueryBuffer.ReadString();
-                Console.WriteLine("Error: " + message + ". Code: " + code);
-                if (_pendingRequests.TryRemove(queryId, out TaskCompletionSource<TLReadBuffer>? errorTcs))
-                    errorTcs.SetResult(null);
-                return;
+                _engine.Dispose();
             }
-
-
-            if (!_pendingRequests.TryRemove(queryId, out TaskCompletionSource<TLReadBuffer>? tcs))
-            {
-                await Console.Out.WriteLineAsync("Response id doesn't match any request's id");
-                return;
-            }
-
-            tcs.SetResult(liteQueryBuffer);
         }
     }
 }
