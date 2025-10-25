@@ -269,9 +269,30 @@ namespace TonSdk.Adnl.LiteClient
                 if (_pendingQueries.TryRemove(queryIdHex, out var context))
                 {
                     // Read TL-encoded response buffer (length-prefixed)
-                    byte[] responseData = buffer.ReadBuffer();
-                    _logger.LogDebug("OnDataReceived: Matched query {QueryId}, responseSize={ResponseSize}bytes, completing task",
-                        queryIdHex, responseData.Length);
+                    byte[] liteQuery = buffer.ReadBuffer();
+                    _logger.LogDebug("OnDataReceived: Matched query {QueryId}, liteQuerySize={LiteQuerySize}bytes",
+                        queryIdHex, liteQuery.Length);
+                    
+                    // Parse lite server response (has its own TL structure)
+                    var liteBuffer = new TL.TLReadBuffer(liteQuery);
+                    uint responseCode = liteBuffer.ReadUInt32();
+                    
+                    _logger.LogDebug("OnDataReceived: Response code={ResponseCode:X8}", responseCode);
+                    
+                    // Check for liteServer.error (0x4E4F4301 = CRC32 of "liteServer.error code:int message:string = liteServer.Error")
+                    if (responseCode == 0x4E4F4301)
+                    {
+                        int errorCode = liteBuffer.ReadInt32();
+                        string errorMessage = liteBuffer.ReadString();
+                        var ex = new Exception($"LiteServer error {errorCode}: {errorMessage}");
+                        _logger.LogError(ex, "OnDataReceived: LiteServer returned error for query {QueryId}", queryIdHex);
+                        context.TaskCompletionSource.TrySetException(ex);
+                        return;
+                    }
+                    
+                    // Return the remaining buffer (positioned after response code) as byte[]
+                    byte[] responseData = liteBuffer.ReadObject();
+                    _logger.LogDebug("OnDataReceived: Response data size={ResponseSize}bytes, completing task", responseData.Length);
                     context.TaskCompletionSource.TrySetResult(responseData);
                 }
                 else
