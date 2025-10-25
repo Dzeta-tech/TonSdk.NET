@@ -186,9 +186,10 @@ public class LiteClient : IDisposable
     }
 
     /// <summary>
-    ///     List transactions in a block
+    ///     List transactions in a block with parsed addresses and metadata.
+    ///     Returns user-friendly BlockTransactionsList with typed Address objects.
     /// </summary>
-    public async Task<LiteServerBlockTransactions> ListBlockTransactions(
+    public async Task<Types.BlockTransactionsList> ListBlockTransactions(
         TonNodeBlockIdExt id,
         uint count = 1024,
         LiteServerTransactionId3 after = null,
@@ -205,28 +206,15 @@ public class LiteClient : IDisposable
             () => Encoder.EncodeListBlockTransactions(id, count, mode, after),
             cancellationToken: cancellationToken);
 
-        return Decoder.DecodeBlockTransactions(response);
+        LiteServerBlockTransactions raw = Decoder.DecodeBlockTransactions(response);
+        return Types.BlockTransactionsList.FromRaw(raw);
     }
 
     /// <summary>
-    ///     Get account state
+    ///     Get account state with parsed balance, code, and data.
+    ///     Returns user-friendly ClientAccountState with typed Coins and Cell objects.
     /// </summary>
-    public async Task<LiteServerAccountState> GetAccountState(
-        TonNodeBlockIdExt id,
-        LiteServerAccountId account,
-        CancellationToken cancellationToken = default)
-    {
-        byte[] response = await Engine.QueryAsync(
-            () => Encoder.EncodeAccountState(id, account),
-            cancellationToken: cancellationToken);
-
-        return Decoder.DecodeAccountState(response);
-    }
-
-    /// <summary>
-    ///     Get account state by address
-    /// </summary>
-    public async Task<LiteServerAccountState> GetAccountState(
+    public async Task<Types.ClientAccountState> GetAccountState(
         TonNodeBlockIdExt id,
         Address address,
         CancellationToken cancellationToken = default)
@@ -236,7 +224,13 @@ public class LiteClient : IDisposable
             Workchain = address.Workchain,
             Id = address.Hash
         };
-        return await GetAccountState(id, accountId, cancellationToken);
+
+        byte[] response = await Engine.QueryAsync(
+            () => Encoder.EncodeAccountState(id, accountId),
+            cancellationToken: cancellationToken);
+
+        LiteServerAccountState raw = Decoder.DecodeAccountState(response);
+        return Types.ClientAccountState.FromRaw(raw, address);
     }
 
     /// <summary>
