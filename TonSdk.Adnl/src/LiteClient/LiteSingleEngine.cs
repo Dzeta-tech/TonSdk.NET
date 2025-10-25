@@ -279,7 +279,7 @@ namespace TonSdk.Adnl.LiteClient
                     
                     _logger.LogDebug("OnDataReceived: Response code={ResponseCode:X8}", responseCode);
                     
-                    // Check for liteServer.error (0x4E4F4301 = CRC32 of "liteServer.error code:int message:string = liteServer.Error")
+                    // Check for liteServer.error (0x4E4F4301)
                     if (responseCode == 0x4E4F4301)
                     {
                         int errorCode = liteBuffer.ReadInt32();
@@ -291,8 +291,9 @@ namespace TonSdk.Adnl.LiteClient
                     }
                     
                     // Return the remaining buffer (positioned after response code) as byte[]
+                    // Note: Some decoders may need special handling for empty/small responses
                     byte[] responseData = liteBuffer.ReadObject();
-                    _logger.LogDebug("OnDataReceived: Response data size={ResponseSize}bytes, completing task", responseData.Length);
+                    _logger.LogDebug("OnDataReceived: Response data size={ResponseSize}bytes, passing to decoder", responseData.Length);
                     context.TaskCompletionSource.TrySetResult(responseData);
                 }
                 else
